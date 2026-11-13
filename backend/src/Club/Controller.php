@@ -31,7 +31,8 @@ final class Controller
                 $payload=match($resource){
                     'bootstrap'=>$this->repo->bootstrap($actor,$now),
                     'students'=>$this->repo->students($actor,$now,$cursor===''?'':Rules::id($cursor),Rules::choice($request->query['status']??'active',['active','all','trial','permanent','inactive'])),
-                    'applications'=>$this->repo->applications($actor,$cursor===''?'':Rules::id($cursor)),
+                    'student'=>$this->repo->detail($actor,Rules::id($request->query['studentId']??null),$now),
+                    'applications'=>$this->repo->applications($actor,$cursor===''?'':Rules::id($cursor),Rules::choice($request->query['status']??'all',['all','pending','accepted','rejected'])),
                     'payments'=>$this->repo->payments($actor,Rules::id($request->query['studentId']??null),$now,$cursor===''?'':$this->month($cursor)),
                     'changes'=>$this->repo->changes($actor,$this->cursor($request->query['after']??'0'),isset($request->query['studentId'])?Rules::id($request->query['studentId']):null),
                     'devices'=>$this->devices($actor),
@@ -58,6 +59,8 @@ final class Controller
         return $response;
     }
     private function create(array $actor,array $data,Request $r,int $now): array {
+        $bucket=hash_hmac('sha256','club-enroll:'.$actor['id'],$this->config->get('RATE_LIMIT_KEY'));
+        if(!$this->store->allow($bucket,$now,30)){throw new ApiError(429,'rate_limited');}
         $key=$r->headers['idempotency-key']??null;if(!is_string($key)||!preg_match('/^[A-Za-z0-9_-]{16,80}$/D',$key)){throw new ApiError(422,'idempotency_key_required');}
         return $this->repo->enroll($actor,Rules::input($data,$now),$key,$now);
     }

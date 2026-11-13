@@ -30,7 +30,7 @@ final class Repository
     private function scope(array $actor,string $alias='s'): array {
         if($actor['role']==='user'){return ["EXISTS(SELECT 1 FROM club_student_guardians g WHERE g.student_id=$alias.id AND g.user_id=?)",[$actor['id']]];}
         if($actor['role']==='trainer'){return ["EXISTS(SELECT 1 FROM club_trainer_halls t WHERE t.hall_id=$alias.hall_id AND t.user_id=?)",[$actor['id']]];}
-        return ['1=1',[]];
+        return in_array($actor['role'],['head_trainer','admin'],true)?['1=1',[]]:['1=0',[]];
     }
     public function student(array $actor,string $id,bool $lock=false): array {
         [$scope,$args]=$this->scope($actor);$row=$this->q('SELECT s.* FROM club_students s WHERE s.id=? AND '.$scope.($lock?' FOR UPDATE':''),array_merge([$id],$args))->fetch();
@@ -56,11 +56,18 @@ final class Repository
         $month=Rules::month($now);$rows=$this->q("SELECT s.*,COALESCE(p.status,'unpaid') payment_status,COALESCE(p.version,0) payment_version FROM club_students s LEFT JOIN club_payments p ON p.student_id=s.id AND p.month=? WHERE $where ORDER BY s.id LIMIT 101",array_merge([$month.'-01'],$args))->fetchAll();
         $more=count($rows)>100;if($more){array_pop($rows);}return ['items'=>array_map(fn($r)=>$this->studentDto($r,$month),$rows),'nextCursor'=>$more?end($rows)['id']:null];
     }
-    public function applications(array $actor,string $cursor=''): array {
+    public function detail(array $actor,string $id,int $now): array {
+        $row=$this->student($actor,$id);$month=Rules::month($now);
+        $payment=$this->q('SELECT status payment_status,version payment_version FROM club_payments WHERE student_id=? AND month=?',[$id,$month.'-01'])->fetch();
+        return $this->studentDto(array_merge($row,$payment?:[]),$month);
+    }
+    public function applications(array $actor,string $cursor='',string $status='all'): array {
         $where=$actor['role']==='user'?'a.applicant_id=?':($actor['role']==='trainer'?'EXISTS(SELECT 1 FROM club_trainer_halls t WHERE t.user_id=? AND t.hall_id=a.hall_id)':'1=1');
-        $args=in_array($actor['role'],['user','trainer'],true)?[$actor['id']]:[];if($cursor!==''){$where.=' AND a.id>?';$args[]=$cursor;}
+        $args=in_array($actor['role'],['user','trainer'],true)?[$actor['id']]:[];
+        if($status!=='all'){$where.=' AND a.status=?';$args[]=$status;}
+        if($cursor!==''){$where.=' AND a.id>?';$args[]=$cursor;}
         $rows=$this->q("SELECT a.*,s.last_name,s.first_name,s.middle_name,s.age FROM club_applications a JOIN club_students s ON s.id=a.student_id WHERE $where ORDER BY a.id LIMIT 101",$args)->fetchAll();
-        $more=count($rows)>100;if($more){array_pop($rows);}return ['items'=>array_map(fn($r)=>['id'=>$r['id'],'studentId'=>$r['student_id'],'locationId'=>$r['hall_id'],'lastName'=>$r['last_name'],'firstName'=>$r['first_name'],'middleName'=>$r['middle_name'],'age'=>(int)$r['age'],'requestedDate'=>$r['requested_date'],'comment'=>$r['comment'],'guardian'=>$r['representative_json']?json_decode($r['representative_json'],true,32,JSON_THROW_ON_ERROR):null,'status'=>$r['status'],'version'=>(int)$r['version'],'createdAt'=>$r['created_at'].'Z'],$rows),'nextCursor'=>$more?end($rows)['id']:null];
+        $more=count($rows)>100;if($more){array_pop($rows);}return ['items'=>array_map(fn($r)=>['id'=>$r['id'],'studentId'=>$r['student_id'],'locationId'=>$r['hall_id'],'lastName'=>$r['last_name'],'firstName'=>$r['first_name'],'middleName'=>$r['middle_name'],'age'=>(int)$r['age'],'requestedDate'=>$r['requested_date'],'comment'=>$r['comment'],'guardian'=>$r['representative_json']?json_decode($r['representative_json'],true,32,JSON_THROW_ON_ERROR):null,'status'=>$r['status'],'version'=>(int)$r['version'],'createdAt'=>Rules::iso($r['created_at'])],$rows),'nextCursor'=>$more?end($rows)['id']:null];
     }
     public function enroll(array $actor,array $input,string $key,int $now): array {
         $hash=hash('sha256',json_encode($input,JSON_THROW_ON_ERROR));
@@ -130,6 +137,8 @@ final class Repository
         if($month>Rules::month($now)||($month!==Rules::month($now)&&$reason==='')){throw new ApiError(422,'correction_reason_required');}
         return $this->transaction($actor,function()use($actor,$id,$month,$status,$version,$reason,$now){
             $s=$this->student($actor,$id,true);$this->staffHall($actor,$s['hall_id']);if(!$s['admitted_at']){throw new ApiError(409,'admission_required');}
+            $first=(new \DateTimeImmutable($s['created_at'],new \DateTimeZone('UTC')))->setTimezone(new \DateTimeZone('Europe/Kaliningrad'))->format('Y-m');
+            if($month<$first){throw new ApiError(422,'invalid_month');}
             $old=$this->q('SELECT * FROM club_payments WHERE student_id=? AND month=? FOR UPDATE',[$id,$month.'-01'])->fetch();
             if((int)($old['version']??0)!==$version){throw new ApiError(409,'version_conflict');}
             if($old&&$old['status']===$status){return ['studentId'=>$id,'month'=>$month,'status'=>$status,'version'=>$version];}
@@ -144,8 +153,8 @@ final class Repository
         if($studentId!==null){$this->student($actor,$studentId);}
         if($actor['role']==='user'){$where='EXISTS(SELECT 1 FROM club_student_guardians g WHERE g.student_id=a.student_id AND g.user_id=?)';$args=[$actor['id']];}
         elseif($actor['role']==='trainer'){$where='EXISTS(SELECT 1 FROM club_trainer_halls t WHERE t.hall_id=a.hall_id AND t.user_id=?)';$args=[$actor['id']];}else{$where='1=1';$args=[];}
-        $args[]=$after;if($studentId!==null){$where.=' AND a.student_id=?';$args[]=$studentId;}
-        $rows=$this->q('SELECT a.* FROM club_audit a WHERE '.$where.' AND a.id>? ORDER BY a.id LIMIT 101', $studentId===null?$args:array_merge(array_slice($args,0,-2),[$studentId,$after]))->fetchAll();
-        $more=count($rows)>100;if($more){array_pop($rows);}return ['items'=>array_map(fn($r)=>['id'=>(int)$r['id'],'studentId'=>$r['student_id'],'locationId'=>$r['hall_id'],'actorId'=>$r['actor_user_id']===null?null:(int)$r['actor_user_id'],'action'=>$r['action'],'entityId'=>$r['entity_id'],'details'=>json_decode($r['details_json'],true,32,JSON_THROW_ON_ERROR),'createdAt'=>$r['created_at'].'Z'],$rows),'cursor'=>$rows?(int)end($rows)['id']:$after,'hasMore'=>$more];
+        if($studentId!==null){$where.=' AND a.student_id=?';$args[]=$studentId;}$args[]=$after;
+        $rows=$this->q('SELECT a.* FROM club_audit a WHERE '.$where.' AND a.id>? ORDER BY a.id LIMIT 101',$args)->fetchAll();
+        $more=count($rows)>100;if($more){array_pop($rows);}return ['items'=>array_map(fn($r)=>['id'=>(int)$r['id'],'studentId'=>$r['student_id'],'locationId'=>$r['hall_id'],'actorId'=>$r['actor_user_id']===null?null:(int)$r['actor_user_id'],'action'=>$r['action'],'entityId'=>$r['entity_id'],'details'=>json_decode($r['details_json'],true,32,JSON_THROW_ON_ERROR),'createdAt'=>Rules::iso($r['created_at'])],$rows),'cursor'=>$rows?(int)end($rows)['id']:$after,'hasMore'=>$more];
     }
 }

@@ -1,4 +1,4 @@
-export type UserRole = "user" | "trainer" | "head_trainer";
+export type UserRole = "user" | "trainer" | "head_trainer" | "admin";
 export type UserSession = { mode: "demo"; displayName: string } | {
   mode: "server"; displayName: string; id: number; role: UserRole;
 };

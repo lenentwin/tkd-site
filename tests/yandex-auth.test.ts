@@ -17,7 +17,7 @@ describe("Yandex server auth adapter", () => {
     await expect(fetchYandexSession()).rejects.toThrow();
   });
   it("rejects malformed profiles and unrecognized roles", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify({ ...profile, user: { id: 1, role: "admin" } }))));
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify({ ...profile, user: { id: 1, role: "super_admin" } }))));
     await expect(fetchYandexSession()).rejects.toThrow();
   });
   it("posts logout with CSRF and reports server failure", async () => {

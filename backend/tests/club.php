@@ -78,4 +78,30 @@ $pdo->prepare("UPDATE users SET role='user' WHERE id=?")->execute([$trainer['id'
 check(call($trainer,'POST','device-revoke',['id'=>$deviceId])->status===200&&$native()->status===401);
 check(!str_contains(json_encode($pdo->query('SELECT * FROM club_device_tokens')->fetchAll()),$token));
 check(!str_contains(json_encode($pdo->query('SELECT details_json FROM club_audit')->fetchAll()),$token));pass('per-device hashed expiring tokens, live role checks, revocation, no shared APK secret');
+// Actual public entrypoint over HTTP with real MySQL and fictional data only.
+$now=time();$httpParent=actor('990000090','user');
+$socket=stream_socket_server('tcp://127.0.0.1:0',$errno,$error);$address=stream_socket_get_name($socket,false);fclose($socket);
+$process=proc_open([PHP_BINARY,'-S',$address,__DIR__.'/http-router.php'],[1=>['file',sys_get_temp_dir().'/mft39-club-http-test.log','a'],2=>['file',sys_get_temp_dir().'/mft39-club-http-test.log','a']],$pipes,dirname(__DIR__,2));
+try {
+    $ready=false;for($i=0;$i<50;$i++){$socket=@fsockopen('tcp://'.$address);if($socket){fclose($socket);$ready=true;break;}usleep(100000);}check($ready);
+    $http=function(string $method,string $resource,array $headers=[],?array $body=null)use($address):array{
+        $h=curl_init('http://'.$address.'/api/club/index.php?resource='.$resource);
+        curl_setopt_array($h,[CURLOPT_RETURNTRANSFER=>true,CURLOPT_HEADER=>true,CURLOPT_CUSTOMREQUEST=>$method,CURLOPT_HTTPHEADER=>$headers,CURLOPT_TIMEOUT=>5]);
+        if($body!==null){curl_setopt($h,CURLOPT_POSTFIELDS,json_encode($body,JSON_THROW_ON_ERROR));}
+        $text=curl_exec($h);$status=curl_getinfo($h,CURLINFO_RESPONSE_CODE);$size=curl_getinfo($h,CURLINFO_HEADER_SIZE);curl_close($h);
+        return [$status,substr($text,0,$size),substr($text,$size)];
+    };
+    [$status,$headers]=$http('OPTIONS','applications',['Origin: https://mft39.ru','Access-Control-Request-Method: POST','Access-Control-Request-Headers: content-type,x-csrf-token,idempotency-key']);
+    check($status===204&&str_contains($headers,'Access-Control-Allow-Credentials: true'));
+    [$status]=$http('GET','bootstrap');check($status===401);
+    $headers=['Origin: https://mft39.ru','Cookie: __Host-mft39='.$httpParent['sid']];
+    [$status,,$body]=$http('GET','bootstrap',$headers);check($status===200&&json_decode($body,true)['schemaVersion']===2);
+    $draft=['students'=>[['lastName'=>'Синтетический','firstName'=>'Проверка','age'=>25]],'locationId'=>'school10','requestedDate'=>Rules::day(time()+86400)];
+    [$status]=$http('POST','applications',array_merge($headers,['Content-Type: application/json','Idempotency-Key: http-fixture-idempotent']),$draft);check($status===403);
+    $headers=array_merge($headers,['Content-Type: application/json','X-CSRF-Token: '.$httpParent['csrf'],'Idempotency-Key: http-fixture-idempotent']);
+    [$status,,$body]=$http('POST','applications',$headers,$draft);check($status===200);$created=json_decode($body,true);
+    [$status,,$body]=$http('POST','applications',$headers,$draft);check($status===200&&json_decode($body,true)['replayed']===true);
+    check((int)$repo->q('SELECT COUNT(*) FROM club_applications WHERE id=?',[$created['applicationIds'][0]])->fetchColumn()===1);
+    pass('actual physical club HTTP entrypoint, preflight, auth, CSRF, persisted enrollment and retry');
+}finally{proc_terminate($process);proc_close($process);}
 echo "Club integration: $cases groups passed\n";

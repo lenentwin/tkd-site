@@ -3,7 +3,7 @@ import type { UserSession } from "../types/services";
 
 const profileSchema = z.object({
   authenticated: z.literal(true),
-  user: z.object({ id: z.number().int().positive().safe(), role: z.enum(["user", "trainer", "head_trainer"]) }),
+  user: z.object({ id: z.number().int().positive().safe(), role: z.enum(["user", "trainer", "head_trainer", "admin"]) }),
   csrfToken: z.string().regex(/^[A-Za-z0-9_-]{43}$/),
 });
 export const yandexStartUrl = "https://api.mft39.ru/auth/yandex/start/";

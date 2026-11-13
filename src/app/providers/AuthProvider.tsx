@@ -49,10 +49,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     alive.current = true;
     void refresh();
     const checkVisible = () => { if (document.visibilityState === "visible") void refresh(); };
+    const expired = () => { invalidatePending(); current.current = null; setSession(null); setLoading(false); setUnavailable(false); };
     const timer = window.setInterval(() => { if (current.current) checkVisible(); }, 60000);
     window.addEventListener("focus", checkVisible);
     window.addEventListener("pageshow", checkVisible);
     document.addEventListener("visibilitychange", checkVisible);
+    window.addEventListener("mft39:session-expired", expired);
     return () => {
       alive.current = false;
       invalidatePending();
@@ -60,6 +62,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       window.removeEventListener("focus", checkVisible);
       window.removeEventListener("pageshow", checkVisible);
       document.removeEventListener("visibilitychange", checkVisible);
+      window.removeEventListener("mft39:session-expired", expired);
     };
   }, [refresh, invalidatePending]);
   return (
