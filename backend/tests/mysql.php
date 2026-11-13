@@ -44,8 +44,9 @@ $socket=stream_socket_server('tcp://127.0.0.1:0',$errno,$error); $address=stream
 $process=proc_open([PHP_BINARY,'-S',$address,__DIR__.'/http-router.php'],[1=>['file',sys_get_temp_dir().'/mft39-http-test.log','a'],2=>['file',sys_get_temp_dir().'/mft39-http-test.log','a']],$pipes,dirname(__DIR__,2));
 try {
     $ready=false; for($i=0;$i<50;$i++){ $socket=@fsockopen('tcp://'.$address); if($socket){fclose($socket);$ready=true;break;} usleep(100000); } check($ready);
-    $get=function(string $path,array $headers=[])use($address):array {
+    $get=function(string $path,array $headers=[], bool $post=false)use($address):array {
         $h=curl_init('http://'.$address.$path); curl_setopt_array($h,[CURLOPT_RETURNTRANSFER=>true,CURLOPT_HEADER=>true,CURLOPT_HTTPHEADER=>$headers,CURLOPT_FOLLOWLOCATION=>false,CURLOPT_TIMEOUT=>5]);
+        if ($post) { curl_setopt($h, CURLOPT_POST, true); }
         $text=curl_exec($h); $status=curl_getinfo($h,CURLINFO_RESPONSE_CODE); curl_close($h); return [$status,$text];
     };
     [$status,$text]=$get('/health/index.php'); check($status===200 && str_contains($text,'"status":"ok"'));
@@ -54,9 +55,10 @@ try {
     [$status,$text]=$get('/api/me/',['Cookie: __Host-mft39='.$sid,'Origin: https://evil.invalid']); check($status===403 && !str_contains($text,'Access-Control-Allow-Origin'));
     [$status,$text]=$get('/auth/yandex/start/index.php'); check($status===302 && str_contains($text,'Secure; HttpOnly; SameSite=Lax') && !str_contains($text,'Domain='));
     [$status,$text]=$get('/auth/yandex/callback/index.php?state=bad&code=never-log-this'); check($status===400 && !str_contains($text,'never-log-this'));
+    [$status,$text]=$get('/api/logout/',['Cookie: __Host-mft39='.$sid,'Origin: https://mft39.ru','X-CSRF-Token: '.$me->body['csrfToken']],true); check($status===200 && str_contains($text,'Max-Age=0'));
+    [$status,$text]=$get('/api/me/',['Cookie: __Host-mft39='.$sid]); check($status===401);
     echo "PASS actual PHP entrypoints: health, profile, cookies, CORS, callback error\n";
 } finally { proc_terminate($process); proc_close($process); }
-$out=$app->handle(new Request('POST','/api/logout',headers:['origin'=>'https://mft39.ru','x-csrf-token'=>$me->body['csrfToken']],cookies:['__Host-mft39'=>$sid]));
-check($out->status===200 && $store->session(tokenHash($sid))===null);
+check($store->session(tokenHash($sid))===null);
 $store->cleanup(time()+86401); check((int)$pdo->query('SELECT COUNT(*) FROM auth_sessions')->fetchColumn()===0);
 echo "PASS real DB logout and expiry cleanup\n";

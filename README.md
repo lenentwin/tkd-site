@@ -1,6 +1,6 @@
 # MFT39
 
-Сайт клуба тхэквондо МФТ в Калининграде. React 19, TypeScript strict, Vite, GSAP. Backend и база данных не подключены.
+Сайт клуба тхэквондо МФТ в Калининграде. React 19, TypeScript strict, Vite, GSAP. PHP backend авторизации подготовлен в backend/; production-подключение включается после настройки российского хостинга.
 
 ## Локальный запуск
 
@@ -53,9 +53,11 @@ Vite preview не применяет Cloudflare _headers/_redirects как edge-
 
 ## Backend и Яндекс ID
 
-.env.example содержит только публичный VITE_API_BASE_URL. VITE_* попадает в JS браузера и никогда не должен содержать секретов. Непустой адрес должен использовать HTTPS без credentials, query и fragment. В src/services/backend.ts статус остаётся not-connected: один адрес не включает несуществующий API. При внедрении адаптера отдельно согласуйте endpoint-контракт и добавьте точный backend origin в connect-src CSP.
+Нативный PHP 8.3/PDO/cURL backend находится в `backend/`. Полная установка MySQL, config.local.php, Яндекс OAuth и ISPmanager описана в `backend/docs/DEPLOYMENT_RU.md`; контракт API — `backend/docs/API.md`. Сервер выполняет реальный code exchange с PKCE S256, хранит только собственные сессии, защищает logout через Origin+CSRF. Фиктивный Яндекс существует только в tests/, не загружается на хостинг.
 
-Будущий backend размещается отдельно в России. Яндекс OAuth CLIENT_SECRET, state/session keys, токены и доступ к российской базе хранятся только там. Сервер начинает OAuth, проверяет state и привязку callback, обменивает code на token сервер-сервер и выдаёт защищённую сессию; фронтенд не принимает токены через URL и не хранит их в localStorage. Реальный OAuth пока не включён. Подробнее: docs/DEPLOYMENT.md.
+`.env.example` содержит только публичные `VITE_API_BASE_URL` и `VITE_AUTH_ENABLED`. До приёмки Cludex оставьте флаг false. Затем задайте адрес https://api.mft39.ru и флаг true в Actions Variables и пересоберите Pages. Существующие LoginPage/AccountPage/AuthProvider поддерживают проверенный серверный профиль и честное состояние недоступности. Стили не менялись; запись на тренировки остаётся отключённой. DEV демонстрация сохранена отдельно.
+
+Client Secret и пароль MySQL хранятся исключительно в приватном config.local.php на российском сервере или PHP-FPM environment. В VITE_*, GitHub/Pages, localStorage и URL frontend секретов нет. База и live OAuth владельцем ещё не настроены/не проверены; успешные тесты с mock Яндексом не заменяют ручной реальный вход. Backend не развёртывается workflow GitHub Pages: туда попадает только Vite dist.
 
 Не включайте Cloudflare Web Analytics, Zaraz, сторонние error/форм-сервисы для передачи анкет. Ни анкеты, ни токены не должны попадать в GitHub, Cloudflare Functions/D1 или логи запросов. Публичные контакты клуба уже были предоставлены как контент.
 

@@ -10,6 +10,8 @@
 
 ## Данные и доступ
 
+Уточнение от 13 ноября: задание на PHP backend имеет приоритет над прежним запретом реализации OAuth. Актуальный API/роли/сессии: backend/docs/API.md. UserSession теперь demo | server; AuthProvider дополнительно возвращает loading/unavailable. При VITE_AUTH_ENABLED=true и API https://api.mft39.ru signIn выполняет top-level переход на серверный start, профиль приходит через credentials:include, signOut требует настоящий logout. При выключенном флаге production остаётся not-connected. Исходный контракт demo ниже сохранён для локального режима; backend не реализует BookingService или публичную CMS.
+
 - Типы и Zod-схема: `src/types/content.ts`. Инициализация: `src/content/site.content.ts`. Только одна модель `SiteContent`, version 1; публичные компоненты читают её через provider, не импортируют defaultContent для рендеринга.
 - `import { useContent } from '../app/providers/ContentProvider'` (относительный путь по месту). Возвращает `{ content: SiteContent }`; редактору дополнительно доступны replaceContent/save/reset/undo/redo/dirty/error.
 - `import { useTheme } from '../app/providers/ThemeProvider'`: `{ theme: 'dark' | 'light', toggleTheme(), setTheme(mode) }`. Атрибут `data-theme` на html, CSS variables `--accent`, `--accent-secondary`, `--grid-opacity`, `--transition-duration` устанавливаются provider. CSS базовых тем задаёт субагент.

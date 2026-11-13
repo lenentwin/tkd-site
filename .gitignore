@@ -20,6 +20,6 @@ playwright-report/
 Thumbs.db
 # Local requirement originals and machine-specific research are preserved locally.
 docs/sources/
-backend/config.local.php
+backend/config.local.php*
 backend/var/
 *.sql.gz
