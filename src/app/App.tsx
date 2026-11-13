@@ -16,10 +16,11 @@ import RutubePage from "../pages/RutubePage";
 import VkPage from "../pages/VkPage";
 import ServiceUnavailablePage from "../pages/ServiceUnavailablePage";
 import { useContent } from "./providers/ContentProvider";
+import { yandexAuthEnabled } from "../services/backend";
 
 const EditorPage = import.meta.env.DEV ? lazy(() => import("../editor/EditorPage")) : null;
-const LoginPage = import.meta.env.DEV ? lazy(() => import("../pages/LoginPage")) : ServiceUnavailablePage;
-const AccountPage = import.meta.env.DEV ? lazy(() => import("../pages/AccountPage")) : ServiceUnavailablePage;
+const LoginPage = import.meta.env.DEV || yandexAuthEnabled ? lazy(() => import("../pages/LoginPage")) : ServiceUnavailablePage;
+const AccountPage = import.meta.env.DEV || yandexAuthEnabled ? lazy(() => import("../pages/AccountPage")) : ServiceUnavailablePage;
 const BookingPage = import.meta.env.DEV ? lazy(() => import("../pages/BookingPage")) : ServiceUnavailablePage;
 
 class AppBoundary extends Component<

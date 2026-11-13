@@ -1,0 +1,42 @@
+name: PHP backend tests
+on:
+  push:
+    paths: ['backend/**', '.github/workflows/backend.yml']
+  pull_request:
+    paths: ['backend/**', '.github/workflows/backend.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  php83-mysql:
+    runs-on: ubuntu-24.04
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: mft39-ci-only
+          MYSQL_DATABASE: mft39_auth_test
+        ports: ['3306:3306']
+        options: --health-cmd="mysqladmin ping -pmft39-ci-only" --health-interval=10s --health-timeout=5s --health-retries=10
+    env:
+      MFT39_TEST_MYSQL: '1'
+      DB_HOST: 127.0.0.1
+      DB_NAME: mft39_auth_test
+      DB_USER: root
+      DB_PASSWORD: mft39-ci-only
+      YANDEX_CLIENT_ID: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+      YANDEX_CLIENT_SECRET: fictional-ci-secret
+      RATE_LIMIT_KEY: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - name: PHP 8.3 and required extensions
+        run: |
+          php8.3 -r 'exit(PHP_VERSION_ID >= 80300 && extension_loaded("pdo_mysql") && extension_loaded("curl") ? 0 : 1);'
+      - name: Syntax check
+        run: find backend -name '*.php' -print0 | xargs -0 -n1 php8.3 -l
+      - name: OAuth and security tests (fictional data only)
+        run: php8.3 backend/tests/run.php
+      - name: MySQL, concurrency and HTTP integration
+        run: php8.3 backend/tests/mysql.php

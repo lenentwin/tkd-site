@@ -1,7 +1,7 @@
-export interface UserSession {
-  mode: "demo";
-  displayName: string;
-}
+export type UserRole = "user" | "trainer" | "head_trainer";
+export type UserSession = { mode: "demo"; displayName: string } | {
+  mode: "server"; displayName: string; id: number; role: UserRole;
+};
 export interface AuthService {
   signIn: () => Promise<UserSession>;
   signOut: () => Promise<void>;

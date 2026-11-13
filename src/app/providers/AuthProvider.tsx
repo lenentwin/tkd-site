@@ -1,14 +1,18 @@
-import { createContext, useContext, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import type { UserSession } from "../../types/services";
+import { yandexAuthEnabled } from "../../services/backend";
+import { fetchYandexSession, logoutYandexSession, yandexStartUrl } from "../../services/yandexAuth";
 
 const AuthContext = createContext<{
   session: UserSession | null;
+  loading: boolean;
+  unavailable: boolean;
   signIn: () => Promise<void>;
   signOut: () => Promise<void>;
 } | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<UserSession | null>(() => {
-    if (!import.meta.env.DEV) return null;
+    if (yandexAuthEnabled || !import.meta.env.DEV) return null;
     try {
       return sessionStorage.getItem("mft39.demo") === "on"
         ? { mode: "demo", displayName: "Демо-участник" }
@@ -17,11 +21,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return null;
     }
   });
+  const [loading, setLoading] = useState(yandexAuthEnabled);
+  const [unavailable, setUnavailable] = useState(false);
+  useEffect(() => {
+    if (!yandexAuthEnabled) return;
+    let cancelled = false;
+    void fetchYandexSession().then(({ session }) => {
+      if (!cancelled) { setSession(session); setUnavailable(false); }
+    }).catch(() => { if (!cancelled) setUnavailable(true); })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, []);
   return (
     <AuthContext.Provider
       value={{
         session,
+        loading,
+        unavailable,
         signIn: async () => {
+          if (yandexAuthEnabled) { window.location.assign(yandexStartUrl); return; }
           if (!import.meta.env.DEV) throw new Error("Вход не подключён");
           const { demoAuthService } = await import("../../services/demo");
           const value = await demoAuthService.signIn();
@@ -33,6 +51,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
         },
         signOut: async () => {
+          if (yandexAuthEnabled) { await logoutYandexSession(); setSession(null); return; }
           if (!import.meta.env.DEV) return;
           const { demoAuthService } = await import("../../services/demo");
           await demoAuthService.signOut();

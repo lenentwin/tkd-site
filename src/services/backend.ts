@@ -8,5 +8,8 @@ export function parseApiBaseUrl(value: string | undefined): string | null {
   return url.href.replace(/\/$/, "");
 }
 export const apiBaseUrl = parseApiBaseUrl(import.meta.env.VITE_API_BASE_URL);
+// Enable only after PHP/MySQL/OAuth acceptance on the Russian host.
+export const yandexAuthEnabled = import.meta.env.VITE_AUTH_ENABLED === "true"
+  && apiBaseUrl === "https://api.mft39.ru";
 // An address alone never enables an unimplemented authentication/booking adapter.
 export const backendStatus = "not-connected" as const;
