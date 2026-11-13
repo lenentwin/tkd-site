@@ -121,4 +121,11 @@ test('public files contain no config/fixtures and HTTP client rejects other endp
     }
     try { (new \Mft39\CurlHttpClient())->json('http://untrusted.invalid', []); check(false); } catch (ApiError $e) { check($e->status === 502); }
 });
+test('CGI/FastCGI content headers are parsed without HTTP prefix', function () {
+    $saved=[$_SERVER,$_GET,$_COOKIE];
+    try {
+        $_SERVER=['REQUEST_URI'=>'/api/club/index.php?resource=applications','REQUEST_METHOD'=>'POST','HTTPS'=>'on','CONTENT_TYPE'=>'application/json','CONTENT_LENGTH'=>'42','HTTP_ORIGIN'=>'https://mft39.ru'];$_GET=['resource'=>'applications'];$_COOKIE=[];
+        $request=Request::globals();check($request->headers['content-type']==='application/json'&&$request->headers['content-length']==='42'&&$request->path==='/api/club'&&$request->https);
+    }finally{[$_SERVER,$_GET,$_COOKIE]=$saved;}
+});
 echo "Tests: $passed passed, $failed failed\n"; exit($failed === 0 ? 0 : 1);

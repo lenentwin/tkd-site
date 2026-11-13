@@ -28,6 +28,9 @@ final class Request
         foreach ($_SERVER as $key => $value) {
             if (str_starts_with($key, 'HTTP_')) { $headers[strtolower(str_replace('_', '-', substr($key, 5)))] = $value; }
         }
+        // CGI/FastCGI exposes these without HTTP_, including on PHP-FPM.
+        if (isset($_SERVER['CONTENT_TYPE'])) { $headers['content-type'] = $_SERVER['CONTENT_TYPE']; }
+        if (isset($_SERVER['CONTENT_LENGTH'])) { $headers['content-length'] = $_SERVER['CONTENT_LENGTH']; }
         return new self($_SERVER['REQUEST_METHOD'] ?? 'GET', rtrim($path, '/') ?: '/', $_GET, $headers, $_COOKIE,
             $_SERVER['REMOTE_ADDR'] ?? '', ($_SERVER['HTTPS'] ?? '') === 'on' || ($_SERVER['SERVER_PORT'] ?? '') === '443');
     }

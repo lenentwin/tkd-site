@@ -5,6 +5,7 @@ use Mft39\ApiError;
 
 final class Rules
 {
+    public const CONSENT_VERSION='club-2026-11-13';
     public static function month(int $now): string { return (new \DateTimeImmutable('@'.$now))->setTimezone(new \DateTimeZone('Europe/Kaliningrad'))->format('Y-m'); }
     public static function utc(int $now): string { return gmdate('Y-m-d H:i:s',$now); }
     public static function iso(string $utc): string { return str_replace(' ','T',$utc).'Z'; }
@@ -25,6 +26,7 @@ final class Rules
     public static function version(mixed $value): int { if(!is_int($value)||$value<0||$value>2147483646){throw new ApiError(422,'version_required');}return $value; }
     public static function choice(mixed $v,array $choices): string { if(!is_string($v)||!in_array($v,$choices,true)){throw new ApiError(422,'invalid_fields');}return $v; }
     public static function input(array $v,int $now): array {
+        if(($v['consent']??null)!==true||($v['consentVersion']??null)!==self::CONSENT_VERSION){throw new ApiError(422,'consent_required');}
         if(!isset($v['students'])||!is_array($v['students'])||!array_is_list($v['students'])||count($v['students'])<1||count($v['students'])>20){throw new ApiError(422,'invalid_students');}
         $students=[];foreach($v['students'] as $s){
             if(!is_array($s)||!is_int($s['age']??null)||$s['age']<1||$s['age']>120){throw new ApiError(422,'invalid_age');}
@@ -39,6 +41,6 @@ final class Rules
             $phone=self::text($g['phone']??null,24);if(!preg_match('/^[+0-9 ()-]+$/D',$phone)||!preg_match('/^[0-9]{10,15}$/D',preg_replace('/\D/','',$phone))){throw new ApiError(422,'invalid_phone');}
             $guardian=['lastName'=>self::name($g['lastName']??null),'firstName'=>self::name($g['firstName']??null),'middleName'=>self::name($g['middleName']??'',false),'phone'=>$phone,'relationship'=>self::choice($g['relationship']??null,['parent','guardian'])];
         }
-        return ['students'=>$students,'locationId'=>$hall,'requestedDate'=>$date,'guardian'=>$guardian,'comment'=>self::paragraph($v['comment']??'')];
+        return ['students'=>$students,'locationId'=>$hall,'requestedDate'=>$date,'guardian'=>$guardian,'comment'=>self::paragraph($v['comment']??''),'consent'=>true,'consentVersion'=>self::CONSENT_VERSION];
     }
 }

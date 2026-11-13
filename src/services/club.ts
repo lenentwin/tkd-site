@@ -36,6 +36,7 @@ const errors: Record<string, string> = {
   student_changed: "Данные ученика отличаются от серверной записи. Обновите список учеников.",
   device_limit: "Достигнут лимит активных доступов. Отзовите ненужный доступ.",
   rate_limited: "Слишком много запросов. Подождите несколько минут и повторите попытку.",
+  consent_required: "Подтвердите согласие на обработку данных перед отправкой заявки.",
 };
 export class ClubError extends Error {
   constructor(public readonly status: number, public readonly code: string) { super(errors[code] ?? (status === 401 ? "Сессия завершилась. Войдите снова." : status === 422 ? "Проверьте заполнение полей." : "Сервис учёта временно недоступен. Повторите попытку позже.")); }

@@ -3,8 +3,12 @@ import { localToday, trainingBookingSchema } from "../src/types/trainingBooking"
 const schema = trainingBookingSchema(["hall-a", "hall-b"], "2026-11-13");
 const adult = { lastName: "Проверкин", firstName: "Тест", middleName: "", age: "28" };
 const guardian = { lastName: "Проверкин", firstName: "Тест", middleName: "", phone: "+7 (000) 000-00-00", relationship: "parent" };
-const draft = { students: [adult], locationId: "hall-a", requestedDate: "2026-11-14" };
+const draft = { students: [adult], locationId: "hall-a", requestedDate: "2026-11-14", consent: true, consentVersion: "club-2026-11-13" };
 describe("Future training booking contract", () => {
+  it("requires explicit current-version consent before any submission", () => {
+    for (const consent of [false, undefined, "true", 1]) expect(schema.safeParse({ ...draft, consent }).success).toBe(false);
+    expect(schema.safeParse({ ...draft, consentVersion: "old-version" }).success).toBe(false);
+  });
   it("separates applicant from students and accepts adults without guardian", () => {
     const result = schema.parse(draft);
     expect(result.students[0].age).toBe(28);
@@ -39,7 +43,8 @@ describe("Future training booking contract", () => {
     expect(schema.safeParse({ ...value, guardian: { ...guardian, phone: "123" } }).success).toBe(false);
     expect(schema.safeParse({ ...value, guardian: { ...guardian, relationship: "stranger" } }).success).toBe(false);
   });
-  it("formats today's date in the user's local calendar", () => {
+  it("uses the club calendar consistently with backend validation", () => {
     expect(localToday(new Date(2026, 0, 2, 1))).toBe("2026-01-02");
+    expect(localToday(new Date("2026-12-31T22:00:00Z"))).toBe("2027-01-01");
   });
 });

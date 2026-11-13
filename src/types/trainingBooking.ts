@@ -1,4 +1,5 @@
 import { z } from "zod";
+export const CLUB_CONSENT_VERSION = "club-2026-11-13";
 
 const personName = z.string().trim().min(1, "Заполните поле").max(80, "Не больше 80 символов")
   .regex(/^[\p{L}\p{M} .’'-]+$/u, "Используйте буквы, пробел, дефис или апостроф")
@@ -17,7 +18,8 @@ const guardianSchema = z.object({
   phone: z.string().trim().refine(value => /^[+\d ()-]+$/.test(value) && /^\d{10,15}$/.test(value.replace(/\D/g, "")), "Укажите телефон: от 10 до 15 цифр"),
 });
 export function localToday(date = new Date()): string {
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+  const parts = new Intl.DateTimeFormat("en", { timeZone: "Europe/Kaliningrad", year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(date);
+  return `${parts.find(part => part.type === "year")!.value}-${parts.find(part => part.type === "month")!.value}-${parts.find(part => part.type === "day")!.value}`;
 }
 export function trainingBookingSchema(locationIds: readonly string[], today = localToday()) {
   return z.object({
@@ -26,6 +28,8 @@ export function trainingBookingSchema(locationIds: readonly string[], today = lo
     requestedDate: z.string().refine(value => /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(Date.parse(value)) && new Date(value).toISOString().slice(0, 10) === value && value >= today, "Выберите существующую дату не раньше сегодняшней"),
     guardian: guardianSchema.optional(),
     comment: z.string().trim().max(1000, "Не больше 1000 символов").optional(),
+    consent: z.literal(true, { error: "Перед отправкой необходимо согласие на обработку данных" }),
+    consentVersion: z.literal(CLUB_CONSENT_VERSION),
   }).superRefine((value, context) => {
     if (value.students.some(student => student.age < 18) && !value.guardian) {
       context.addIssue({ code: "custom", path: ["guardian"], message: "Для несовершеннолетнего укажите родителя или законного представителя" });

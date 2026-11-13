@@ -44,3 +44,11 @@ jobs:
         run: php8.3 backend/tests/mysql.php
       - name: Club enrollment, scopes, monthly accounting and concurrency
         run: php8.3 backend/tests/club.php
+      - name: Restart isolated MySQL and verify persisted club data
+        run: |
+          docker restart '${{ job.services.mysql.id }}'
+          for attempt in $(seq 1 30); do
+            if docker exec '${{ job.services.mysql.id }}' mysqladmin ping -h127.0.0.1 -pmft39-ci-only --silent; then break; fi
+            sleep 1
+          done
+          php8.3 backend/tests/club-persistence.php

@@ -10,7 +10,7 @@ function StudentDetails({ student, updated, refresh }: { student: ClubStudent; u
   const { month, data, error: connectionError } = useClub(); const [status, setStatus] = useState(student.status); const [selectedMonth, setMonth] = useState(month);
   const [reason, setReason] = useState(""); const [error, setError] = useState(""); const [busy, setBusy] = useState(false); const [revision, setRevision] = useState(0);
   const load = useCallback(() => clubApi.payments(student.id, selectedMonth && selectedMonth !== month ? followingMonth(selectedMonth) : ""), [student.id, selectedMonth, month]);
-  const payments = useResource(load, !!data && !connectionError, revision);
+  const payments = useResource(load, !!data && !connectionError, `${revision}:${data?.serverTime}`);
   useEffect(() => setMonth(month), [month]); useEffect(() => setStatus(student.status), [student.status]);
   const payment = payments.data?.items.find(item => item.month === selectedMonth);
   const canWrite = !busy && !payments.busy && !connectionError && !!payment && data?.currentMonth === month && payments.data?.currentMonth === month;
@@ -41,6 +41,19 @@ export default function TrainerPage() {
   const students = usePaged(loadStudents, enabled, refreshKey); const applications = usePaged(loadApplications, enabled, refreshKey);
   useEffect(() => setSelected(null), [club.data?.scopeVersion]);
   const selectedId = selected?.id;
+  const selectedVersion = selected?.version; const selectedPaymentVersion = selected?.payment.version;
+  useEffect(() => {
+    if (!selectedId || !enabled) return;
+    let stale = false;
+    void clubApi.student(selectedId).then(fresh => {
+      if (stale) return;
+      setSelected(current => {
+        if (!current || current.id !== selectedId || fresh.version < current.version || fresh.payment.month < current.payment.month || (fresh.payment.month === current.payment.month && fresh.payment.version < current.payment.version)) return current;
+        return fresh.version === current.version && fresh.payment.month === current.payment.month && fresh.payment.version === current.payment.version ? current : fresh;
+      });
+    }).catch(error => { if (!stale) { setSelected(null); setError(error instanceof Error ? error.message : "Не удалось обновить карточку."); } });
+    return () => { stale = true; };
+  }, [selectedId, selectedVersion, selectedPaymentVersion, enabled, club.data?.serverTime]);
   useEffect(() => {
     if (!selectedId) return;
     const frame = requestAnimationFrame(() => document.querySelector(".club-details")?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth", block: "start" }));

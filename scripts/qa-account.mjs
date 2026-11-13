@@ -102,6 +102,7 @@ try {
       await page.getByLabel("Возраст, полных лет", { exact: true }).nth(1).fill("12");
       await page.getByLabel("Спортивный зал", { exact: true }).selectOption({ index: 1 });
       await page.getByLabel("Желаемая дата тренировки", { exact: true }).fill("2099-01-02");
+      await page.getByLabel("Согласие на обработку данных", { exact: true }).check();
       await page.getByRole("button", { name: "Проверить заполнение" }).click();
       await page.getByRole("status").filter({ hasText: "Заявка не отправлялась" }).waitFor();
       assert(await page.getByRole("button", { name: "Отправка недоступна" }).isDisabled());

@@ -23,8 +23,13 @@ $pdo->prepare('INSERT INTO club_trainer_halls(user_id,hall_id,assigned_at) VALUE
 $pdo->prepare('INSERT INTO club_trainer_halls(user_id,hall_id,assigned_at) VALUES(?,?,?)')->execute([$outside['id'],'city',Rules::utc($now)]);
 check(call(null,'GET','bootstrap')->status===401);check(call($parent,'GET','bootstrap',headers:['origin'=>'https://evil.invalid'])->status===403);
 check(call($parent,'POST','applications',headers:['x-csrf-token'=>'bad'])->status===403);pass('authentication, exact CORS and CSRF');
-$input=['students'=>[['lastName'=>'Проверкин','firstName'=>'Тест','middleName'=>'','age'=>9]],'locationId'=>'chelnokova','requestedDate'=>'2026-11-20','guardian'=>['lastName'=>'Проверкин','firstName'=>'Пример','middleName'=>'','phone'=>'+70000000000','relationship'=>'parent'],'comment'=>'Синтетический тест'];
+$input=['students'=>[['lastName'=>'Проверкин','firstName'=>'Тест','middleName'=>'','age'=>9]],'locationId'=>'chelnokova','requestedDate'=>'2026-11-20','guardian'=>['lastName'=>'Проверкин','firstName'=>'Пример','middleName'=>'','phone'=>'+70000000000','relationship'=>'parent'],'comment'=>'Синтетический тест','consent'=>true,'consentVersion'=>Rules::CONSENT_VERSION];
+check(call($parent,'POST','applications',array_replace($input,['consent'=>false]),headers:['idempotency-key'=>'missing-consent-key'])->status===422);
+check(call($parent,'POST','applications',array_replace($input,['consentVersion'=>'old-version']),headers:['idempotency-key'=>'old-consent-version-key'])->status===422);
+check((int)$pdo->query('SELECT COUNT(*) FROM club_students')->fetchColumn()===0);
 $created=call($parent,'POST','applications',$input,headers:['idempotency-key'=>'first-test-request-key']);check($created->status===200,'Create failed');$appId=$created->body['applicationIds'][0];
+$proof=$repo->q('SELECT * FROM club_application_batches WHERE id=?',[$created->body['batchId']])->fetch();
+check($proof['consent_version']===Rules::CONSENT_VERSION&&$proof['consented_at']===Rules::utc($now)&&(int)$proof['applicant_id']===$parent['id']);pass('explicit versioned consent is required and persisted with the authenticated account');
 $application=$pdo->query("SELECT * FROM club_applications WHERE id='$appId'")->fetch();$student=$application['student_id'];
 check($application['status']==='pending'&&(int)$pdo->query('SELECT COUNT(*) FROM club_student_guardians')->fetchColumn()===1);
 check($pdo->query("SELECT learning_status FROM club_students WHERE id='$student'")->fetchColumn()==='trial');pass('real MySQL pending application, trial student and guardian');
@@ -45,6 +50,9 @@ check(call($trainer,'POST','application-decision',['id'=>$next,'status'=>'reject
 check(call($trainer,'POST','student-status',['studentId'=>$student,'status'=>'permanent','expectedVersion'=>$row['version']])->status===200);
 check(call($parent,'POST','student-status',['studentId'=>$student,'status'=>'permanent','expectedVersion'=>3])->status===403);
 $payment=['studentId'=>$student,'month'=>'2026-11','status'=>'paid','expectedVersion'=>0,'expectedCurrentMonth'=>'2026-11'];
+$paymentsBefore=(int)$pdo->query('SELECT COUNT(*) FROM club_payments')->fetchColumn();$auditBefore=(int)$pdo->query('SELECT COUNT(*) FROM club_audit')->fetchColumn();
+check(call($parent,'POST','payment',$payment)->status===403);
+check((int)$pdo->query('SELECT COUNT(*) FROM club_payments')->fetchColumn()===$paymentsBefore&&(int)$pdo->query('SELECT COUNT(*) FROM club_audit')->fetchColumn()===$auditBefore);
 check(call($outside,'POST','payment',$payment)->status===404);$paid=call($trainer,'POST','payment',$payment);check($paid->status===200&&$paid->body['version']===1);
 $stored=$pdo->query("SELECT * FROM club_payments WHERE student_id='$student'")->fetch();check((int)$stored['confirmed_by']===$trainer['id']&&$stored['confirmed_at']!==null);
 check(call($trainer,'POST','payment',array_replace($payment,['status'=>'unpaid']))->status===409);pass('payment confirmation actor/time and stale update rejection');
@@ -79,6 +87,13 @@ pass('personal guardian view never includes other families even for staff');
 $device=call($trainer,'POST','device-create',['label'=>'Synthetic Android']);check($device->status===200);$token=$device->body['token'];$deviceId=$device->body['id'];
 $native=function(?int $time=null)use($controller,$token,$now){return $controller->handle(new Request('GET','/api/club',['resource'=>'bootstrap'],['authorization'=>'Bearer '.$token]),'', $time??$now);};
 check($native()->status===200);check($native($now+28800)->status===401);
+$nativeCall=function(string $method,string $resource,array $query=[],array $body=[])use($controller,$token,$now){return $controller->handle(new Request($method,'/api/club',array_merge(['resource'=>$resource],$query),['authorization'=>'Bearer '.$token,'content-type'=>'application/json']),json_encode($body,JSON_THROW_ON_ERROR),$now);};
+$phone=$nativeCall('GET','student',['studentId'=>$student]);check($phone->status===200&&$phone->body['status']==='inactive');
+check($nativeCall('POST','student-status',body:['studentId'=>$student,'status'=>'permanent','expectedVersion'=>$phone->body['version']])->status===200);
+check($nativeCall('POST','payment',body:array_replace($payment,['expectedVersion'=>2]))->status===200);
+$web=call($parent,'GET','student',query:['studentId'=>$student]);check($web->body['status']==='permanent'&&$web->body['payment']['status']==='paid'&&$web->body['payment']['version']===3);
+check($nativeCall('POST','payment',body:array_replace($payment,['status'=>'unpaid','expectedVersion'=>2,'reason'=>'Stale phone']))->status===409);
+pass('native client and website see the same MySQL state and stale native writes are rejected');
 check(call($parent,'POST','device-create',['label'=>'Forbidden'])->status===403);
 $pdo->prepare("UPDATE users SET role='user' WHERE id=?")->execute([$trainer['id']]);check($native()->status===403);$pdo->prepare("UPDATE users SET role='trainer' WHERE id=?")->execute([$trainer['id']]);
 check(call($trainer,'POST','device-revoke',['id'=>$deviceId])->status===200&&$native()->status===401);
@@ -112,7 +127,7 @@ $audit1=$repo->changes($paged,0);$audit2=$repo->changes($paged,$audit1['cursor']
 pass('120 real MySQL students/applications and scoped audit paginate without duplicates');
 
 // Actual public entrypoint over HTTP with real MySQL and fictional data only.
-$now=time();$httpParent=actor('990000090','user');
+$now=time();$httpParent=actor('990000090','user');$httpStaff=actor('990000092','head_trainer');
 $socket=stream_socket_server('tcp://127.0.0.1:0',$errno,$error);$address=stream_socket_get_name($socket,false);fclose($socket);
 $process=proc_open([PHP_BINARY,'-S',$address,__DIR__.'/http-router.php'],[1=>['file',sys_get_temp_dir().'/mft39-club-http-test.log','a'],2=>['file',sys_get_temp_dir().'/mft39-club-http-test.log','a']],$pipes,dirname(__DIR__,2));
 try {
@@ -129,12 +144,21 @@ try {
     [$status]=$http('GET','bootstrap');check($status===401);
     $headers=['Origin: https://mft39.ru','Cookie: __Host-mft39='.$httpParent['sid']];
     [$status,,$body]=$http('GET','bootstrap',$headers);check($status===200&&json_decode($body,true)['schemaVersion']===2);
-    $draft=['students'=>[['lastName'=>'Синтетический','firstName'=>'Проверка','age'=>25]],'locationId'=>'school10','requestedDate'=>Rules::day(time()+86400)];
+    $draft=['students'=>[['lastName'=>'Синтетический','firstName'=>'Проверка','age'=>25]],'locationId'=>'school10','requestedDate'=>Rules::day(time()+86400),'consent'=>true,'consentVersion'=>Rules::CONSENT_VERSION];
     [$status]=$http('POST','applications',array_merge($headers,['Content-Type: application/json','Idempotency-Key: http-fixture-idempotent']),$draft);check($status===403);
     $headers=array_merge($headers,['Content-Type: application/json','X-CSRF-Token: '.$httpParent['csrf'],'Idempotency-Key: http-fixture-idempotent']);
     [$status,,$body]=$http('POST','applications',$headers,$draft);check($status===200);$created=json_decode($body,true);
     [$status,,$body]=$http('POST','applications',$headers,$draft);check($status===200&&json_decode($body,true)['replayed']===true);
     check((int)$repo->q('SELECT COUNT(*) FROM club_applications WHERE id=?',[$created['applicationIds'][0]])->fetchColumn()===1);
     pass('actual physical club HTTP entrypoint, preflight, auth, CSRF, persisted enrollment and retry');
+    proc_terminate($process);proc_close($process);
+    $process=proc_open([PHP_BINARY,'-S',$address,__DIR__.'/http-router.php'],[1=>['file',sys_get_temp_dir().'/mft39-club-http-test.log','a'],2=>['file',sys_get_temp_dir().'/mft39-club-http-test.log','a']],$pipes,dirname(__DIR__,2));
+    $ready=false;for($i=0;$i<50;$i++){$socket=@fsockopen('tcp://'.$address);if($socket){fclose($socket);$ready=true;break;}usleep(100000);}check($ready);
+    [$status,,$body]=$http('GET','applications',['Origin: https://mft39.ru','Cookie: __Host-mft39='.$httpParent['sid']]);
+    check($status===200&&json_decode($body,true)['items'][0]['id']===$created['applicationIds'][0]);
+    [$status,,$body]=$http('GET','payments&studentId='.$student,['Origin: https://mft39.ru','Cookie: __Host-mft39='.$httpStaff['sid']]);
+    $november=array_values(array_filter(json_decode($body,true)['items'],fn($p)=>$p['month']==='2026-11'));
+    check($status===200&&count($november)===1&&$november[0]['status']==='paid'&&$november[0]['version']===3);
+    pass('PHP HTTP server restart preserves applications, sessions and monthly payments');
 }finally{proc_terminate($process);proc_close($process);}
 echo "Club integration: $cases groups passed\n";

@@ -14,7 +14,7 @@ export function HistoryView({ studentId, own = false }: { studentId: string; own
   const { month, data, error } = useClub(); const enabled = !!data && !error;
   const loadPayments = useCallback((cursor: string) => clubApi.payments(studentId, cursor, own), [studentId, own]);
   const loadAudit = useCallback(async (cursor: string) => { const value = await clubApi.audit(studentId, Number(cursor), own); return { items: value.items, nextCursor: value.hasMore ? String(value.cursor) : null }; }, [studentId, own]);
-  const payments = usePaged(loadPayments, enabled, `${studentId}:${month}`); const audit = usePaged(loadAudit, enabled, `${studentId}:${month}`);
+  const payments = usePaged(loadPayments, enabled, `${studentId}:${month}:${data?.serverTime}`); const audit = usePaged(loadAudit, enabled, `${studentId}:${month}:${data?.serverTime}`);
   return <section className="club-history"><h3>История оплат</h3>
     {(payments.error || audit.error) && <p role="alert" className="cabinet-error">{payments.error || audit.error}<button className="text-link" onClick={() => { void payments.reload(); void audit.reload(); }}>Повторить загрузку</button></p>}
     {payments.busy && <p role="status">Загружаем историю…</p>}

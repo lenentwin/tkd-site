@@ -1,7 +1,7 @@
 import { useRef, useState, type FormEvent } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useContent } from "../app/providers/ContentProvider";
-import { localToday, trainingBookingSchema } from "../types/trainingBooking";
+import { CLUB_CONSENT_VERSION, localToday, trainingBookingSchema } from "../types/trainingBooking";
 import Icon from "../components/presentation/Icon";
 import { formatDisplayText } from "../components/presentation/DisplayText";
 import { clubApi } from "../services/club";
@@ -19,6 +19,7 @@ export default function BookingPage() {
   const [date, setDate] = useState(""); const [errors, setErrors] = useState<Record<string, string>>({}); const [checked, setChecked] = useState(false);
   const form = useRef<HTMLFormElement>(null);
   const [comment, setComment] = useState(""); const [busy, setBusy] = useState(false); const sending = useRef(false);
+  const [consent, setConsent] = useState(false);
   const [sent, setSent] = useState(false); const [sendError, setSendError] = useState(""); const key = useRef(crypto.randomUUID());
   const connected = !!club.data && !club.error && !club.loading;
   const hasMinor = students.some(student => /^\d+$/.test(student.age) && Number(student.age) > 0 && Number(student.age) < 18);
@@ -30,7 +31,7 @@ export default function BookingPage() {
     if (sending.current) return;
     const result = trainingBookingSchema(content.locations.map(item => item.id)).safeParse({
       students: students.map(({ lastName, firstName, middleName, age }) => ({ lastName, firstName, middleName, age })),
-      guardian: hasMinor ? guardian : undefined, locationId, requestedDate: date, comment,
+      guardian: hasMinor ? guardian : undefined, locationId, requestedDate: date, comment, consent, consentVersion: CLUB_CONSENT_VERSION,
     });
     if (result.success) {
       setErrors({}); setChecked(true); setSendError("");
@@ -38,7 +39,7 @@ export default function BookingPage() {
       sending.current = true; setBusy(true);
       try {
         await clubApi.enroll(result.data, key.current);
-        setSent(true); setStudents([newStudent()]); setGuardian(blankGuardian); setDate(""); setComment(""); setChecked(false); key.current = crypto.randomUUID();
+        setSent(true); setStudents([newStudent()]); setGuardian(blankGuardian); setDate(""); setComment(""); setConsent(false); setChecked(false); key.current = crypto.randomUUID();
       } catch (error) { setSendError(error instanceof Error ? error.message : "Не удалось отправить заявку."); }
       finally { sending.current = false; setBusy(false); }
       return;
@@ -79,6 +80,9 @@ export default function BookingPage() {
         <label>Желаемая дата тренировки<input aria-label="Желаемая дата тренировки" name="requestedDate" type="date" required min={localToday()} value={date} {...accessibility("requestedDate")} onChange={event => { setDate(event.target.value); changed(); }} />{fieldError("requestedDate")}</label>
       </div><p className="cabinet-small">Дата указывает ваше пожелание. Расписание и наличие места подтверждает тренер.</p></fieldset>
       <label>Комментарий (необязательно)<textarea name="comment" value={comment} maxLength={1000} rows={3} onChange={event => { setComment(event.target.value); changed(); }} />{fieldError("comment")}</label>
+      <div className="club-consent-block"><label className="club-consent"><input type="checkbox" name="consent" aria-label="Согласие на обработку данных" checked={consent} required {...accessibility("consent")} onChange={event => { setConsent(event.target.checked); changed(); }} /><span>Я согласен на обработку указанных данных клубом MFT39 для рассмотрения заявки, связи по занятиям и учёта обучения и ежемесячных отметок оплаты. При записи несовершеннолетнего подтверждаю, что являюсь его родителем или законным представителем и даю согласие на обработку его данных.</span></label>{fieldError("consent")}
+        <p className="cabinet-small">Данные отправляются на сервер клуба в России и доступны ответственным сотрудникам. Не указывайте в комментарии медицинские сведения и лишние персональные данные. Вопросы обработки и отзыва согласия: <Link className="text-link" to="/contacts">контакты клуба</Link>.</p>
+      </div>
       {Object.keys(errors).length > 0 && <p role="alert" className="cabinet-error">Проверьте отмеченные поля. Ничего не отправлено.</p>}
       {sendError && <p role="alert" className="cabinet-error">{sendError} Подтверждения сохранения нет. При повторе без изменения полей дубликат не создастся.</p>}
       <div className="cabinet-form-actions"><button className={connected ? "button" : "button-secondary"} type="submit" disabled={busy}>{busy ? "Отправляем…" : connected ? "Отправить заявку" : "Проверить заполнение"}</button>{!connected && <button className="button" type="button" disabled>Отправка недоступна</button>}</div>

@@ -3,7 +3,7 @@ import { bootstrapSchema, clubApi } from "../src/services/club";
 import { currentPayment, kaliningradMonth } from "../src/pages/account/club/ClubProvider";
 const csrf = "x".repeat(43); const id = "e264ab6a-6416-4fef-89e6-ea74157ddcc0";
 const profile = { authenticated: true, user: { id: 1, role: "user" }, csrfToken: csrf };
-const input = { students: [{ lastName: "Проверкин", firstName: "Пример", middleName: "", age: 25 }], locationId: "city", requestedDate: "2026-11-30" };
+const input = { students: [{ lastName: "Проверкин", firstName: "Пример", middleName: "", age: 25 }], locationId: "city", requestedDate: "2026-11-30", consent: true as const, consentVersion: "club-2026-11-13" as const };
 const json = (value: unknown, status = 200) => new Response(JSON.stringify(value), { status });
 afterEach(() => vi.unstubAllGlobals());
 describe("Club transport and calendar", () => {
