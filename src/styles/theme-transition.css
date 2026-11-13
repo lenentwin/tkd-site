@@ -1,0 +1,33 @@
+/* Fade complete theme snapshots together so text and surfaces change in sync. */
+:root[data-theme-transition]::view-transition {
+  pointer-events: none;
+}
+:root[data-theme-transition="fade"]::view-transition-old(root),
+:root[data-theme-transition="soft"]::view-transition-old(root) {
+  animation: theme-fade-out 300ms cubic-bezier(0.4, 0, 0.2, 1) both;
+  mix-blend-mode: normal;
+}
+:root[data-theme-transition="fade"]::view-transition-new(root),
+:root[data-theme-transition="soft"]::view-transition-new(root) {
+  animation: theme-fade-in 300ms cubic-bezier(0.4, 0, 0.2, 1) both;
+  mix-blend-mode: normal;
+}
+:root[data-theme-transition="soft"]::view-transition-old(root),
+:root[data-theme-transition="soft"]::view-transition-new(root) {
+  animation-duration: 150ms;
+}
+:root[data-theme-transition="fallback"] :is(body, .site-header, .site-footer, section, .map-panel, .location-option, .demo-card),
+:root[data-theme-transition="fallback-soft"] :is(body, .site-header, .site-footer, section, .map-panel, .location-option, .demo-card) {
+  transition: background-color 300ms ease, color 300ms ease, border-color 300ms ease;
+}
+:root[data-theme-transition="fallback-soft"] :is(body, .site-header, .site-footer, section, .map-panel, .location-option, .demo-card) {
+  transition-duration: 150ms;
+}
+@keyframes theme-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes theme-fade-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}

@@ -1,0 +1,15 @@
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=()
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self'; connect-src 'self'; frame-src https://api-maps.yandex.ru https://yandex.ru https://rutube.ru; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'none'
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+/editor
+  X-Robots-Tag: noindex, nofollow
+/login
+  X-Robots-Tag: noindex, nofollow
+/account
+  X-Robots-Tag: noindex, nofollow
+/booking
+  X-Robots-Tag: noindex, nofollow

@@ -39,7 +39,7 @@ npm run preview
 | NODE_VERSION | 24 |
 | VITE_API_BASE_URL | оставить пустым |
 
-Установка зависимостей по package-lock.json; локально проверяется npm ci. SPA rewrite задан public/_redirects, защитные заголовки и кэш статических hashed assets в public/_headers. Здесь нет Pages Functions, Workers, D1 или иной базы. CSP запрещает сторонние скрипты и отправку форм; inline styles разрешены для React/GSAP, inline scripts/eval запрещены. Внешние карты и видео разрешены только с указанных официальных origins.
+Установка зависимостей по package-lock.json; локально проверяется npm ci. Используется нативный SPA fallback Pages без верхнеуровневого 404.html (пояснение в public/_redirects), защитные заголовки и кэш статических hashed assets в public/_headers. Здесь нет Pages Functions, Workers, D1 или иной базы. CSP запрещает сторонние скрипты и отправку форм; inline styles разрешены для React/GSAP, inline scripts/eval запрещены. Внешние карты и видео разрешены только с указанных официальных origins.
 
 Vite preview не применяет Cloudflare _headers/_redirects как edge-конфигурацию. После первого развёртывания проверьте прямое открытие /coach, /contacts и /booking, реальный CSP и iframe карт. Настройте собственный домен, SEO/OG и предварительный рендер при необходимости. Индексация служебных маршрутов закрыта; публичные страницы открыты. Деплой Cloudflare не выполняется этим репозиторием автоматически.
 
@@ -54,3 +54,4 @@ Vite preview не применяет Cloudflare _headers/_redirects как edge-
 ## Документация
 
 Текущие результаты и границы: docs/RELEASE_AUDIT.md, docs/RELEASE_AUDIT_INVENTORY.md и docs/DEPLOYMENT.md. Исторические отчёты описывают предыдущий локальный прототип; при конфликте production-поведение определяют эти документы и текущий код. Оригинальные ТЗ и архивы Fonts сохранены локально и исключены из Git; REQUIREMENTS_CHECKLIST.md сохраняет контроль 39 разделов. Исходная лицензия проекта и лицензия веб-шрифтов не подменяются выдуманной open-source лицензией.
+

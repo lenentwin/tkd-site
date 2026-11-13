@@ -1,0 +1,2 @@
+# Cloudflare Pages native SPA fallback handles routes when no 404.html exists.
+# Do not add a catch-all rewrite: it can also intercept real static assets.

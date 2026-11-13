@@ -1,0 +1,422 @@
+/* This layer increases reading size without scaling scenes or changing their geometry. */
+.club-channels {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 36px;
+  border-block: 1px solid var(--line);
+}
+.club-channel-link {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+  min-height: 230px;
+  padding: 32px;
+  position: relative;
+  transition: background-color 160ms ease;
+}
+.club-channel-link + .club-channel-link {
+  border-left: 1px solid var(--line);
+}
+.club-channel-link:hover {
+  background: var(--surface);
+}
+.channel-kind {
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--muted);
+  margin-bottom: 18px;
+}
+.club-channel-link strong {
+  font-family: "Bebas Neue Pro Expanded", var(--display);
+  font-size: clamp(35px, 3.5vw, 52px);
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.025em;
+}
+.channel-description {
+  font-size: 15px;
+  line-height: 1.65;
+  margin-top: 12px;
+  color: var(--muted);
+}
+.channel-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 44px;
+  font-size: 15px;
+  font-weight: 600;
+  margin-top: 20px;
+}
+.channel-action svg {
+  color: var(--interactive-accent);
+  width: 19px;
+}
+.channel-vk::before,
+.channel-rutube::before {
+  content: "";
+  position: absolute;
+  top: 32px;
+  right: 32px;
+  width: 8px;
+  height: 8px;
+  background: var(--accent);
+  border-radius: 50%;
+}
+.channel-vk::before {
+  border-radius: 1px;
+  background: var(--interactive-accent);
+}
+.channel-unavailable {
+  color: var(--muted);
+}
+.reviews-empty {
+  display: block;
+  padding: 32px;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--accent);
+  border-radius: 4px;
+  background: var(--bg);
+}
+.reviews-empty h3 {
+  max-width: 530px;
+}
+.reviews-heading .reviews-section-title {
+  font-family: var(--display);
+  font-size: 30px;
+  line-height: 1.1;
+  color: var(--text);
+  margin-top: 24px;
+}
+.reviews-heading .reviews-section-title + p {
+  margin-top: 14px;
+  color: var(--muted);
+}
+.reviews-community-link {
+  font-size: 17px;
+  padding-block: 8px;
+  border-bottom: 1px solid var(--line);
+}
+@media (min-width: 768px) {
+  body {
+    font-size: 17px;
+    line-height: 1.7;
+  }
+  .header-inner {
+    min-height: 96px;
+    gap: 24px;
+  }
+  .brand-word {
+    font-size: 33px;
+  }
+  .brand-descriptor {
+    font-size: 12px;
+    max-width: 140px;
+    line-height: 1.4;
+  }
+  .desktop-nav {
+    gap: clamp(14px, 1.25vw, 24px);
+  }
+  .desktop-nav a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 48px;
+    padding-block: 12px;
+    font-size: 15px;
+    color: var(--text);
+  }
+  .desktop-nav a[aria-current="location"] {
+    font-weight: 700;
+  }
+  .header-booking {
+    font-size: 15px;
+    gap: 14px;
+  }
+  .footer-inner > p,
+  .footer-note {
+    font-size: 12px;
+  }
+  .footer-links {
+    font-size: 14px;
+    gap: 22px;
+    flex-wrap: wrap;
+  }
+  .footer-links a {
+    min-height: 44px;
+  }
+  .section-space .button,
+  .public-page .button {
+    min-height: 58px;
+    font-size: 16px;
+    padding: 16px 24px;
+    gap: 20px;
+  }
+  .section-space .text-link,
+  .public-page .text-link {
+    font-size: 16px;
+    min-height: 46px;
+  }
+  .section-heading p {
+    font-size: 17px;
+    line-height: 1.75;
+    max-width: 650px;
+  }
+  .section-note,
+  .small-note {
+    font-size: 14px;
+  }
+  .location-overview-item h3 {
+    font-size: 36px;
+  }
+  .location-overview-item > p,
+  .location-overview-item .location-hours {
+    font-size: 16px;
+    line-height: 1.7;
+  }
+  .location-overview-item .location-hours-label {
+    font-size: 13px;
+  }
+  .conditions-main h3 {
+    font-size: 42px;
+  }
+  .conditions-main p {
+    font-size: 16px;
+  }
+  .discount-line h4 {
+    font-size: 16px;
+  }
+  .discount-line p {
+    font-size: 14px;
+  }
+  .map-selector-caption {
+    font-size: 15px;
+  }
+  .location-option {
+    min-height: 118px;
+  }
+  .location-option strong {
+    font-size: 16px;
+    max-width: none;
+  }
+  .location-option > span:nth-child(2) > span {
+    font-size: 14px;
+    line-height: 1.6;
+  }
+  .map-selector > .small-note {
+    font-size: 13px;
+  }
+  .map-provider-switch button {
+    font-size: 14px;
+    min-height: 44px;
+  }
+  .map-address {
+    font-size: 16px;
+  }
+  .map-location-detail dt {
+    font-size: 13px;
+  }
+  .map-location-detail dd {
+    font-size: 16px;
+    line-height: 1.7;
+  }
+  .map-external-note,
+  .map-fallback p {
+    font-size: 14px;
+  }
+  .coach-copy .coach-role {
+    font-size: 15px;
+    line-height: 1.7;
+  }
+  .coach-qualifications > span {
+    font-size: 14px;
+  }
+  .coach-biography {
+    font-size: 16px;
+    line-height: 1.8;
+  }
+  .coach-portrait-caption > span {
+    font-size: 13px;
+  }
+  .medal-label,
+  .medal-label > span:last-child {
+    font-size: 15px;
+  }
+  .medal-footnote > p:first-child,
+  .medal-footnote > p:last-child {
+    font-size: 14px;
+  }
+  .medal-footnote strong {
+    font-size: 38px;
+  }
+  .timeline-heading h3 {
+    font-size: 36px;
+  }
+  .timeline-event h4 {
+    font-size: 36px;
+  }
+  .event-description p {
+    font-size: 16px;
+    line-height: 1.8;
+  }
+  .gallery-bottom > p {
+    font-size: 14px;
+  }
+  .gallery-photo .media-caption {
+    font-size: 14px;
+  }
+  .video-description > p {
+    font-size: 16px;
+    line-height: 1.75;
+    max-width: 700px;
+  }
+  .video-empty-label {
+    font-size: 14px;
+  }
+  .video-subtitle {
+    font-size: 14px;
+  }
+  .reviews-layout {
+    grid-template-columns: 0.8fr 1.15fr;
+    gap: 8%;
+  }
+  .reviews-heading > p:first-child,
+  .reviews-heading .reviews-section-title + p {
+    font-size: 16px;
+  }
+  .reviews-heading h2 {
+    font-size: clamp(64px, 6.3vw, 94px);
+  }
+  .reviews-empty h3 {
+    font-size: 40px;
+  }
+  .reviews-empty p {
+    font-size: 17px;
+    line-height: 1.8;
+  }
+  .review-quote figcaption {
+    font-size: 15px;
+  }
+  .contacts-heading p {
+    font-size: 17px;
+    line-height: 1.8;
+  }
+  .contact-hint,
+  .contacts-socials > span {
+    font-size: 14px;
+  }
+  .contact-email > .text-link,
+  .contacts-socials a {
+    font-size: 16px;
+  }
+  .page-intro > p:last-child,
+  .page-contact-block > p {
+    font-size: 17px;
+    line-height: 1.8;
+  }
+}
+@media (min-width: 1280px) and (max-width: 1599px) {
+  .site-header .brand-descriptor {
+    display: none;
+  }
+}
+@media (min-width: 768px) and (max-width: 1279px) {
+  .desktop-nav {
+    display: none;
+  }
+  .mobile-menu-toggle {
+    display: inline-flex;
+  }
+  .footer-inner {
+    flex-wrap: wrap;
+  }
+  .footer-links {
+    margin-left: auto;
+  }
+  .reviews-layout {
+    gap: 5%;
+  }
+  .reviews-empty {
+    padding: 25px;
+  }
+  .reviews-empty h3 {
+    font-size: 35px;
+  }
+}
+@media (max-width: 767px) {
+  .club-channels {
+    grid-template-columns: 1fr;
+    margin-top: 28px;
+  }
+  .club-channel-link {
+    padding: 27px 20px;
+    min-height: 220px;
+  }
+  .club-channel-link + .club-channel-link {
+    border-left: 0;
+    border-top: 1px solid var(--line);
+  }
+  .club-channel-link strong {
+    font-size: 39px;
+  }
+  .channel-vk::before,
+  .channel-rutube::before {
+    top: 29px;
+    right: 20px;
+  }
+  .channel-description,
+  .channel-action {
+    font-size: 14px;
+  }
+  .channel-kind {
+    font-size: 12px;
+  }
+  .reviews-layout {
+    gap: 30px;
+  }
+  .reviews-empty {
+    padding: 25px 22px;
+  }
+  .reviews-empty h3 {
+    font-size: 34px;
+  }
+  .reviews-empty p {
+    font-size: 15px;
+    line-height: 1.75;
+  }
+  .reviews-empty .button {
+    font-size: 13px;
+    gap: 15px;
+    padding: 14px 16px;
+    margin-top: 23px;
+  }
+  .reviews-heading .reviews-section-title {
+    font-size: 30px;
+  }
+  .reviews-heading .reviews-section-title + p,
+  .reviews-heading > p:first-child {
+    font-size: 14px;
+  }
+  .reviews-heading .reviews-community-link {
+    font-size: 16px;
+    margin-top: 20px;
+  }
+  .mobile-menu nav > a:not(.button) {
+    font-size: 30px;
+    min-height: 48px;
+  }
+  .mobile-menu nav > a[aria-current="location"] {
+    color: var(--interactive-accent);
+    text-decoration: underline;
+    text-underline-offset: 6px;
+  }
+  .footer-links {
+    flex-wrap: wrap;
+    font-size: 12px;
+    justify-content: flex-start;
+    gap: 8px 20px;
+  }
+  .footer-links a {
+    min-height: 44px;
+  }
+}

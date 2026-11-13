@@ -1,0 +1,1247 @@
+@media (min-width:1700px) {
+  .hero-stage {
+    min-height: 600px;
+  }
+  .hero-content {
+    padding-top: 50px;
+  }
+  .hero-heading h1 {
+    font-size: 126px;
+  }
+  .hero-motto {
+    font-size: 94px;
+  }
+  .hero-carousel {
+    inset: 0 -8% 30px -5%;
+  }
+  .hero-card {
+    width: 255px;
+  }
+}
+@media (max-width:1199px) {
+  .header-inner {
+    gap: 20px;
+  }
+  .brand-descriptor {
+    display: none;
+  }
+  .desktop-nav {
+    gap: 20px;
+  }
+  .header-actions {
+    gap: 12px;
+  }
+  .hero-heading h1 {
+    font-size: 7.5vw;
+  }
+  .hero-stage {
+    min-height: 465px;
+  }
+  .hero-motto {
+    font-size: 6.2vw;
+  }
+  .hero-carousel-controls {
+    padding-left: 0;
+  }
+  .hero-carousel-controls>p {
+    font-size: 9px;
+  }
+  .location-overview {
+    gap: 28px;
+  }
+  .map-selector {
+    padding: 24px;
+  }
+  .map-detail {
+    padding: 24px;
+  }
+  .location-option {
+    padding: 18px 12px;
+  }
+  .location-option strong {
+    font-size: 12px;
+  }
+  .coach-presentation {
+    gap: 7%;
+  }
+  .video-description {
+    gap: 30px;
+  }
+  .video-description>div {
+    gap: 15px;
+  }
+  .contacts-heading {
+    gap: 6%;
+  }
+}
+@media (max-width:1023px) {
+  .desktop-nav {
+    display: none;
+  }
+  .mobile-menu-toggle {
+    display: inline-flex;
+  }
+  .brand-descriptor {
+    display: block;
+  }
+  .header-inner {
+    min-height: 77px;
+  }
+  .hero-content {
+    padding-top: 32px;
+  }
+  .hero-heading h1 {
+    font-size: 8vw;
+  }
+  .hero-discipline {
+    font-size: 10px;
+  }
+  .hero-stage {
+    min-height: 450px;
+    grid-template-columns: 45% 55%;
+  }
+  .hero-card {
+    width: 180px;
+  }
+  .hero-motto {
+    font-size: 7vw;
+  }
+  .hero-main-action .button {
+    font-size: 12px;
+    padding: 14px 16px;
+    gap: 15px;
+  }
+  .hero-carousel-controls {
+    justify-content: flex-end;
+  }
+  .hero-carousel-controls>p {
+    display: none;
+  }
+  .hero-main-action>p {
+    font-size: 10px;
+    max-width: 240px;
+  }
+  .hero-bottom>span {
+    display: none;
+  }
+  .section-heading {
+    gap: 25px;
+  }
+  .section-heading h2 {
+    font-size: 56px;
+  }
+  .section-heading-aside .text-link {
+    font-size: 12px;
+  }
+  .location-overview-item h3 {
+    font-size: 27px;
+  }
+  .location-overview-item>p {
+    font-size: 12px;
+  }
+  .conditions-row {
+    gap: 7%;
+  }
+  .conditions-main h3 {
+    font-size: 33px;
+  }
+  .map-panel {
+    grid-template-columns: 1fr 1fr;
+  }
+  .map-selector {
+    padding: 20px 15px;
+  }
+  .location-option {
+    gap: 12px;
+    padding: 17px 10px;
+  }
+  .location-option-index {
+    display: none;
+  }
+  .map-detail {
+    padding: 20px;
+  }
+  .map-provider-switch {
+    align-self: stretch;
+  }
+  .map-provider-switch button {
+    flex: 1;
+    font-size: 10px;
+    padding: 8px 10px;
+  }
+  .map-location-detail h3 {
+    font-size: 34px;
+  }
+  .map-location-detail .button {
+    font-size: 11px;
+    padding: 13px 16px;
+    gap: 15px;
+  }
+  .coach-copy h3,.coach-copy h2 {
+    font-size: 58px;
+  }
+  .coach-section-heading h2 {
+    font-size: 47px;
+  }
+  .coach-biography {
+    font-size: 12px;
+  }
+  .coach-qualifications {
+    gap: 8px 14px;
+  }
+  .coach-qualifications>span {
+    font-size: 10px;
+  }
+  .coach-portrait-caption {
+    padding-inline: 20px;
+  }
+  .coach-portrait-caption strong {
+    font-size: 52px;
+  }
+  .coach-portrait-caption>span {
+    font-size: 10px;
+    max-width: 100px;
+  }
+  .timeline-event summary {
+    grid-template-columns: 130px 1fr 36px;
+    gap: 20px;
+  }
+  .event-description {
+    padding-left: 150px;
+  }
+  .gallery-orbit {
+    height: 480px;
+  }
+  .gallery-photo {
+    width: 200px;
+  }
+  .reviews-layout {
+    gap: 7%;
+    grid-template-columns: .85fr 1fr;
+  }
+  .reviews-empty {
+    gap: 17px;
+  }
+  .reviews-empty h3 {
+    font-size: 32px;
+  }
+  .quote-mark {
+    font-size: 100px;
+  }
+  .video-description {
+    flex-direction: column;
+    gap: 20px;
+  }
+  .video-description>p {
+    max-width: 600px;
+  }
+  .video-description>div {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .contacts-heading {
+    grid-template-columns: 1.1fr .8fr;
+  }
+  .contact-email>a:first-child {
+    font-size: 32px;
+  }
+  .contact-phone {
+    font-size: 7vw;
+  }
+  .contact-cta .button {
+    font-size: 12px;
+    padding: 14px 18px;
+    gap: 15px;
+  }
+  .footer-note {
+    display: none;
+  }
+  .footer-links {
+    gap: 16px;
+  }
+}
+@media (max-width:767px) {
+  :root {
+    --section-space: 76px;
+  }
+  .container,.page-shell {
+    width: calc(100% - 40px);
+  }
+  html {
+    scroll-padding-top: 90px;
+  }
+  body {
+    font-size: 14px;
+  }
+  .header-inner {
+    min-height: 70px;
+    gap: 10px;
+  }
+  .brand-word {
+    font-size: 26px;
+  }
+  .brand-word::after {
+    height: 20px;
+  }
+  .brand {
+    gap: 10px;
+  }
+  .brand-descriptor {
+    font-size: 8px;
+    line-height: 1.35;
+    padding-left: 10px;
+  }
+  .header-actions {
+    gap: 4px;
+  }
+  .header-booking {
+    display: none;
+  }
+  .theme-toggle {
+    width: 36px;
+    height: 40px;
+  }
+  .mobile-menu-toggle {
+    width: 40px;
+    height: 40px;
+    border-color: transparent;
+  }
+  .mobile-menu nav {
+    padding-block: 20px 28px;
+  }
+  .mobile-menu nav>a:not(.button) {
+    font-size: 28px;
+  }
+  .hero-content {
+    padding-top: 30px;
+  }
+  .hero-heading {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0;
+    align-items: flex-start;
+  }
+  .hero-location {
+    width: 100%;
+    font-size: 10px;
+    margin-bottom: 18px;
+  }
+  .hero-heading h1 {
+    font-size: clamp(47px,12.5vw,72px);
+    line-height: .9;
+    letter-spacing: -.03em;
+    white-space: nowrap;
+  }
+  .hero-discipline {
+    font-size: 10px;
+    text-align: left;
+    margin-top: 18px;
+    max-width: 240px;
+  }
+  .hero-discipline br {
+    display: none;
+  }
+  .hero-stage {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    margin-top: 0;
+    align-items: stretch;
+  }
+  .hero-copy {
+    padding: 26px 0 0;
+  }
+  .hero-motto {
+    font-size: clamp(55px,14.5vw,76px);
+    line-height: .94;
+    max-width: 6em;
+  }
+  .hero-main-action {
+    margin-top: 24px;
+  }
+  .hero-main-action .button {
+    font-size: 13px;
+    min-height: 54px;
+    padding: 15px 20px;
+    gap: 22px;
+  }
+  .hero-main-action>p {
+    font-size: 9px;
+    max-width: none;
+    margin-top: 11px;
+  }
+  .hero-carousel-wrap {
+    height: 360px;
+    margin-top: 17px;
+    align-self: auto;
+  }
+  .hero-carousel {
+    inset: 0 -20px 32px;
+    perspective: 1000px;
+  }
+  .hero-card {
+    width: 155px;
+    top: 49%;
+  }
+  .hero-card .ratio-portrait {
+    aspect-ratio: 1/1.65;
+  }
+  .hero-carousel-controls {
+    bottom: 0;
+    justify-content: space-between;
+    left: 0;
+    right: 0;
+  }
+  .hero-carousel-controls>p {
+    display: block;
+    font-size: 9px;
+  }
+  .hero-carousel-controls .icon-button {
+    width: 34px;
+    height: 34px;
+  }
+  .hero-card .placeholder-caption {
+    font-size: 24px;
+    bottom: 20px;
+    left: 16px;
+  }
+  .hero-card .placeholder-category {
+    font-size: 8px;
+    top: 13px;
+    left: 13px;
+  }
+  .hero-mat-line {
+    height: 75px;
+    top: 52%;
+    left: 5%;
+    right: 5%;
+  }
+  .hero-bottom {
+    margin-top: 18px;
+    gap: 10px;
+    padding-block: 19px;
+    font-size: 9px;
+  }
+  .hero-bottom a {
+    gap: 10px;
+  }
+  .hero-bottom svg {
+    height: 14px;
+    width: 14px;
+  }
+  .interactive-grid {
+    display: none;
+  }
+  .section-heading {
+    display: block;
+    margin-bottom: 32px;
+  }
+  .section-heading h2 {
+    font-size: clamp(44px,12vw,61px);
+    max-width: 100%;
+  }
+  .section-heading p {
+    font-size: 12px;
+    line-height: 1.75;
+    margin-top: 17px;
+  }
+  .section-heading-aside {
+    margin-top: 17px;
+  }
+  .section-heading-aside .text-link {
+    font-size: 11px;
+  }
+  .section-note {
+    font-size: 10px;
+  }
+  .age-group-strip {
+    font-size: 20px;
+    margin-bottom: 25px;
+    align-items: stretch;
+  }
+  .age-group-strip span {
+    padding: 16px 12px 16px 0;
+    line-height: 1.15;
+  }
+  .age-group-strip span+span {
+    padding-left: 13px;
+  }
+  .location-overview {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+  .location-overview-item {
+    padding: 25px 0 25px 34px;
+    border-bottom: 1px solid var(--line);
+    display: block;
+  }
+  .location-overview-item>svg {
+    position: absolute;
+    left: 0;
+    top: 28px;
+    width: 18px;
+    height: 18px;
+    margin: 0;
+  }
+  .location-overview-item h3 {
+    font-size: 29px;
+    min-height: 0;
+    max-width: 300px;
+  }
+  .location-overview-item>p {
+    font-size: 11px;
+    margin-top: 10px;
+  }
+  .location-overview-item .location-hours-label {
+    display: block;
+    margin-top: 19px;
+    font-size: 9px;
+  }
+  .location-overview-item .location-hours {
+    font-size: 11px;
+    margin-top: 4px;
+  }
+  .location-overview-item .text-link {
+    font-size: 11px;
+    margin-top: 9px;
+  }
+  .conditions-row {
+    grid-template-columns: 1fr;
+    gap: 32px;
+    margin-top: 35px;
+    padding-top: 0;
+    border-top: 0;
+  }
+  .conditions-main h3 {
+    font-size: 35px;
+  }
+  .conditions-main p {
+    font-size: 12px;
+    max-width: 440px;
+  }
+  .conditions-main .text-link {
+    font-size: 12px;
+  }
+  .discount-list {
+    gap: 19px;
+    border-top: 1px solid var(--line);
+    padding-top: 28px;
+  }
+  .discount-number {
+    font-size: 45px;
+    min-width: 73px;
+  }
+  .discount-line {
+    gap: 15px;
+  }
+  .discount-line h4 {
+    font-size: 12px;
+  }
+  .discount-line p {
+    font-size: 9px;
+  }
+  .discount-list>.small-note {
+    font-size: 9px;
+  }
+  .map-panel {
+    grid-template-columns: 1fr;
+  }
+  .map-selector {
+    padding: 22px 16px 18px;
+  }
+  .map-selector-caption {
+    font-size: 11px;
+    margin-bottom: 15px;
+  }
+  .location-options {
+    gap: 5px;
+  }
+  .location-option {
+    min-height: 82px;
+    padding: 15px 12px;
+    gap: 15px;
+  }
+  .location-option strong {
+    font-size: 12px;
+    max-width: none;
+  }
+  .location-option>span:nth-child(2)>span {
+    font-size: 9px;
+    margin-top: 5px;
+  }
+  .location-option-index {
+    display: block;
+    font-size: 26px;
+  }
+  .map-selector>.small-note {
+    font-size: 9px;
+    margin-top: 15px;
+  }
+  .map-detail {
+    border-top: 1px solid var(--line);
+    padding: 22px;
+  }
+  .map-provider-switch {
+    align-self: flex-start;
+    margin-bottom: 25px;
+  }
+  .map-provider-switch button {
+    font-size: 10px;
+    min-height: 38px;
+    padding: 9px 13px;
+  }
+  .map-location-detail h3 {
+    font-size: 36px;
+  }
+  .map-address {
+    font-size: 12px;
+  }
+  .map-symbol svg {
+    width: 25px;
+    height: 25px;
+  }
+  .map-symbol {
+    margin-bottom: 15px;
+  }
+  .map-location-detail dl {
+    margin-block: 23px;
+  }
+  .map-location-detail dt {
+    font-size: 9px;
+  }
+  .map-location-detail dd {
+    font-size: 11px;
+  }
+  .map-location-detail .button {
+    font-size: 11px;
+    min-height: 48px;
+    padding: 13px 16px;
+    gap: 20px;
+  }
+  .map-external-note {
+    font-size: 9px;
+    margin-top: 14px;
+  }
+  .map-fallback p {
+    font-size: 11px;
+  }
+  .coach-section-heading {
+    display: block;
+    margin-bottom: 32px;
+  }
+  .coach-section-heading>p {
+    font-size: 10px;
+    margin-bottom: 16px;
+  }
+  .coach-section-heading h2 {
+    text-align: left;
+    font-size: 48px;
+    line-height: 1;
+    max-width: 380px;
+  }
+  .coach-presentation {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+  .coach-portrait {
+    max-width: 460px;
+    width: calc(100% - 14px);
+  }
+  .coach-portrait .media-frame {
+    aspect-ratio: 4/4.5;
+  }
+  .coach-portrait-caption {
+    padding: 40px 20px 20px;
+  }
+  .coach-portrait-caption>span {
+    max-width: 130px;
+    font-size: 10px;
+  }
+  .coach-portrait-caption strong {
+    font-size: 64px;
+  }
+  .coach-portrait .placeholder-caption {
+    font-size: 34px;
+    bottom: 90px;
+  }
+  .coach-copy .coach-role {
+    font-size: 10px;
+    margin-bottom: 18px;
+    max-width: 300px;
+  }
+  .coach-copy h3,.coach-copy h2 {
+    font-size: 61px;
+    max-width: 350px;
+  }
+  .coach-qualifications {
+    margin-top: 22px;
+    gap: 9px 15px;
+  }
+  .coach-qualifications>span {
+    font-size: 10px;
+  }
+  .coach-biography {
+    font-size: 12px;
+    margin-top: 23px;
+  }
+  .coach-copy .text-link {
+    font-size: 12px;
+    margin-top: 20px;
+  }
+  .medal-numbers {
+    gap: 12px;
+  }
+  .medal-count {
+    font-size: clamp(65px,21vw,100px);
+  }
+  .medal-label {
+    gap: 5px;
+    margin-top: 14px;
+    flex-wrap: wrap;
+    font-size: 10px;
+  }
+  .medal-label>span:last-child {
+    font-size: 9px;
+    margin-left: 0;
+    width: 100%;
+    padding-left: 16px;
+  }
+  .medal-disc {
+    width: 9px;
+    height: 9px;
+  }
+  .medal-distribution {
+    margin-top: 24px;
+    height: 4px;
+  }
+  .medal-footnote {
+    gap: 25px;
+    margin-top: 17px;
+  }
+  .medal-footnote>p:first-child {
+    font-size: 9px;
+    max-width: 220px;
+  }
+  .medal-footnote>p:last-child {
+    font-size: 9px;
+  }
+  .medal-footnote strong {
+    display: block;
+    font-size: 29px;
+    margin: 0 0 5px;
+  }
+  .timeline {
+    margin-top: 50px;
+  }
+  .timeline-heading {
+    align-items: flex-start;
+    gap: 15px;
+    margin-bottom: 20px;
+  }
+  .timeline-heading h3 {
+    font-size: 29px;
+    max-width: 200px;
+  }
+  .timeline-heading .text-link {
+    font-size: 10px;
+    gap: 7px;
+    min-height: 34px;
+  }
+  .timeline-heading .text-link svg {
+    width: 14px;
+  }
+  .timeline-event summary {
+    grid-template-columns: 82px 1fr 28px;
+    gap: 12px;
+    padding: 22px 0;
+  }
+  .event-year {
+    font-size: 30px;
+  }
+  .timeline-event h4 {
+    font-size: 26px;
+  }
+  .event-expand {
+    width: 28px;
+    height: 28px;
+  }
+  .event-expand svg {
+    width: 16px;
+    height: 16px;
+  }
+  .event-description {
+    padding: 0 0 25px 94px;
+  }
+  .event-description p {
+    font-size: 11px;
+  }
+  .event-description .media-frame {
+    margin-left: -94px;
+    width: 100%;
+    max-width: none;
+  }
+  .gallery-section {
+    padding-bottom: 36px;
+  }
+  .gallery-orbit {
+    height: 390px;
+    perspective: 1000px;
+  }
+  .gallery-photo {
+    width: 160px;
+  }
+  .gallery-photo .placeholder-caption {
+    font-size: 23px;
+    left: 15px;
+    bottom: 30px;
+  }
+  .gallery-photo .placeholder-category {
+    font-size: 8px;
+    left: 13px;
+    top: 13px;
+  }
+  .gallery-photo .media-caption {
+    font-size: 9px;
+    padding: 24px 12px 12px;
+  }
+  .gallery-open {
+    opacity: 1;
+    width: 28px;
+    height: 28px;
+    right: 10px;
+    top: 10px;
+  }
+  .gallery-open svg {
+    width: 17px;
+    height: 17px;
+  }
+  .gallery-orbit-track {
+    left: 2%;
+    right: 2%;
+    top: 44%;
+    height: 100px;
+  }
+  .gallery-bottom {
+    gap: 20px;
+  }
+  .gallery-bottom>p {
+    font-size: 9px;
+    max-width: 190px;
+  }
+  .gallery-bottom .icon-button {
+    width: 36px;
+    height: 36px;
+  }
+  .photo-viewer {
+    width: calc(100% - 20px);
+    max-height: 97dvh;
+  }
+  .photo-viewer-inner {
+    padding: 12px 13px 18px;
+  }
+  .photo-viewer-top {
+    margin-bottom: 12px;
+  }
+  .photo-viewer-top>span {
+    font-size: 10px;
+  }
+  .photo-viewer-top .icon-button {
+    width: 37px;
+    height: 37px;
+  }
+  .photo-viewer-media {
+    height: 61vh;
+  }
+  .photo-viewer-bottom {
+    gap: 14px;
+    margin-top: 17px;
+    align-items: center;
+  }
+  .photo-viewer-bottom h2 {
+    font-size: 26px;
+  }
+  .photo-viewer-bottom p {
+    font-size: 9px;
+  }
+  .photo-counter {
+    font-size: 9px;
+    margin-right: 2px;
+  }
+  .photo-viewer-bottom .control-group {
+    gap: 4px;
+  }
+  .photo-viewer-bottom .icon-button {
+    width: 32px;
+    height: 32px;
+  }
+  .photo-viewer-media .placeholder-caption {
+    font-size: 35px;
+    left: 20px;
+    bottom: 25px;
+  }
+  .video-surface {
+    aspect-ratio: 4/4.1;
+  }
+  .video-overlay {
+    padding: 25px;
+  }
+  .rutube-wordmark {
+    font-size: 16px;
+  }
+  .video-overlay h3 {
+    font-size: 43px;
+    max-width: 250px;
+    margin-bottom: 0;
+  }
+  .video-subtitle {
+    display: none;
+  }
+  .video-empty-label {
+    font-size: 9px;
+    max-width: 235px;
+    margin-top: 17px;
+    padding: 7px 9px;
+  }
+  .video-court {
+    width: 125%;
+    right: -50%;
+    top: 2%;
+    border-width: 26px;
+  }
+  .video-description {
+    padding-top: 20px;
+    gap: 18px;
+  }
+  .video-description>p {
+    font-size: 11px;
+  }
+  .video-description>div {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .video-description .button {
+    font-size: 11px;
+    min-height: 45px;
+  }
+  .video-description .text-link {
+    font-size: 11px;
+  }
+  .reviews-layout {
+    grid-template-columns: 1fr;
+    gap: 35px;
+  }
+  .reviews-heading>p:first-child {
+    font-size: 11px;
+    margin-bottom: 14px;
+  }
+  .reviews-heading h2 {
+    font-size: 54px;
+    max-width: 330px;
+  }
+  .reviews-heading h2+p {
+    font-size: 11px;
+  }
+  .reviews-heading .text-link {
+    font-size: 12px;
+    margin-top: 15px;
+  }
+  .reviews-empty {
+    padding-top: 30px;
+    border-top: 1px solid var(--line);
+    gap: 20px;
+  }
+  .quote-mark {
+    font-size: 100px;
+  }
+  .reviews-empty h3 {
+    font-size: 34px;
+  }
+  .reviews-empty p {
+    font-size: 12px;
+    margin-top: 15px;
+  }
+  .reviews-empty .text-link {
+    font-size: 11px;
+    margin-top: 18px;
+  }
+  .review-quote blockquote {
+    font-size: 29px;
+  }
+  .review-quote figcaption {
+    font-size: 10px;
+    gap: 15px;
+  }
+  .review-quote .text-link {
+    font-size: 9px;
+  }
+  .contacts-heading {
+    grid-template-columns: 1fr;
+    gap: 25px;
+    margin-bottom: 35px;
+  }
+  .contacts-heading h2 {
+    font-size: clamp(57px,15.2vw,76px);
+    max-width: 370px;
+  }
+  .contacts-heading p {
+    font-size: 12px;
+    max-width: 330px;
+  }
+  .contact-actions {
+    grid-template-columns: 1fr;
+    gap: 26px;
+  }
+  .contact-primary {
+    grid-column: auto;
+  }
+  .contact-phone,.contact-actions.is-compact .contact-phone {
+    font-size: clamp(34px,9.2vw,48px);
+    gap: 12px;
+    letter-spacing: 0;
+  }
+  .contact-phone>svg {
+    width: 20px;
+    height: 20px;
+  }
+  .contact-hint {
+    font-size: 9px;
+    margin-top: 8px;
+  }
+  .contact-email {
+    padding-top: 0;
+  }
+  .contact-email>a:first-child,.contact-actions.is-compact .contact-email>a:first-child {
+    font-size: 32px;
+    gap: 20px;
+  }
+  .contact-email>a:first-child svg {
+    width: 18px;
+  }
+  .contact-email>.text-link {
+    font-size: 10px;
+    margin-top: 8px;
+  }
+  .contact-cta {
+    gap: 9px;
+    padding-top: 0;
+  }
+  .contact-cta .button {
+    font-size: 12px;
+    gap: 20px;
+    padding: 15px 20px;
+    min-height: 53px;
+  }
+  .contact-cta>.text-link {
+    font-size: 11px;
+  }
+  .contacts-socials {
+    margin-top: 40px;
+    gap: 28px;
+    flex-wrap: wrap;
+    padding-top: 20px;
+  }
+  .contacts-socials a {
+    font-size: 11px;
+    gap: 12px;
+  }
+  .contacts-socials>span {
+    width: 100%;
+    margin: 0;
+    font-size: 9px;
+  }
+  .contacts-section {
+    padding-bottom: 30px;
+  }
+  .site-footer {
+    padding-block: 25px;
+  }
+  .footer-inner {
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .footer-inner>.brand-word {
+    font-size: 25px;
+  }
+  .footer-inner>p {
+    font-size: 9px;
+    max-width: 140px;
+  }
+  .footer-links {
+    margin-left: 0;
+    width: 100%;
+    justify-content: space-between;
+    gap: 15px;
+    font-size: 9px;
+  }
+  .footer-links a {
+    min-height: 33px;
+  }
+  .page-intro {
+    padding-top: 45px;
+    padding-bottom: 35px;
+  }
+  .page-intro h1 {
+    font-size: 63px;
+    line-height: .96;
+  }
+  .page-intro>p:last-child {
+    font-size: 12px;
+    margin-top: 23px;
+  }
+  .public-page {
+    padding-bottom: 65px;
+  }
+  .coach-profiles {
+    gap: 70px;
+  }
+  .page-contact-block {
+    padding-top: 70px;
+  }
+  .page-contact-block h2 {
+    font-size: 47px;
+  }
+  .page-contact-block>p {
+    font-size: 12px;
+  }
+  .page-contact-block .contact-actions {
+    margin-top: 30px;
+  }
+  .page-contact-block>.text-link {
+    font-size: 12px;
+    margin-top: 22px;
+  }
+  .achievements-page .timeline {
+    margin-top: 65px;
+  }
+  .contacts-page .map-section {
+    padding-top: 65px;
+  }
+  .contacts-page .locations-section {
+    margin-top: 0;
+  }
+  .community-banner {
+    padding: 23px 19px;
+    gap: 20px;
+    align-items: flex-start;
+    margin-bottom: 40px;
+  }
+  .vk-symbol {
+    font-size: 42px;
+  }
+  .community-banner h2 {
+    font-size: 28px;
+  }
+  .community-banner p {
+    font-size: 10px;
+    margin-top: 10px;
+  }
+  .community-banner>svg {
+    width: 17px;
+    height: 17px;
+  }
+  .page-shell {
+    padding-block: 40px 65px;
+  }
+  .page-shell h1 {
+    font-size: 58px;
+  }
+  .demo-notice {
+    font-size: 12px;
+    padding: 14px 16px;
+  }
+  .action-notification {
+    right: 20px;
+    bottom: 20px;
+    max-width: calc(100vw - 40px);
+    font-size: 12px;
+  }
+}
+@media (max-width:374px) {
+  .container,.page-shell {
+    width: calc(100% - 36px);
+  }
+  .brand-descriptor {
+    display: none;
+  }
+  .hero-heading h1 {
+    font-size: 12.3vw;
+  }
+  .hero-motto {
+    font-size: 14.6vw;
+  }
+  .hero-main-action .button {
+    font-size: 12px;
+    padding-inline: 16px;
+    gap: 18px;
+  }
+  .hero-carousel-wrap {
+    height: 345px;
+  }
+  .hero-card {
+    width: 145px;
+  }
+  .contact-phone,.contact-actions.is-compact .contact-phone {
+    font-size: 9.1vw;
+  }
+  .age-group-strip {
+    font-size: 18px;
+  }
+  .age-group-strip span+span {
+    padding-left: 10px;
+  }
+  .age-group-strip span {
+    padding-right: 9px;
+  }
+  .map-detail {
+    padding: 20px 16px;
+  }
+  .timeline-event summary {
+    grid-template-columns: 76px 1fr 26px;
+    gap: 9px;
+  }
+  .event-description {
+    padding-left: 85px;
+  }
+  .event-description .media-frame {
+    margin-left: -85px;
+  }
+  .medal-label {
+    font-size: 9px;
+    gap: 4px;
+  }
+}
+@media (prefers-reduced-motion:reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .site-route {
+    animation: none;
+  }
+  .button,.text-link svg,.event-expand,.contact-phone svg {
+    transition: background-color 150ms ease,color 150ms ease,opacity 150ms ease;
+  }
+  .button:hover,.button:active,.text-link:hover svg,.contact-phone:hover>svg {
+    transform: none;
+  }
+  .timeline-event[open] .event-description {
+    animation: reduced-detail 150ms ease;
+  }
+  .interactive-grid {
+    display: none;
+  }
+  .hero-mat-line,.gallery-orbit-track {
+    transform: none;
+    opacity: .15;
+  }
+  .gallery-open {
+    transition: opacity 150ms ease;
+  }
+  @keyframes reduced-detail {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+}

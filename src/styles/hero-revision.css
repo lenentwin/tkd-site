@@ -1,0 +1,262 @@
+/* The gold duplicate belongs to its glyph, never to the line's text flow. */
+.hero-motto {
+  isolation: isolate;
+}
+.motto-letter {
+  isolation: isolate;
+}
+.motto-light,
+.motto-heavy {
+  background: linear-gradient(to bottom, #e5e5e8 0%, #f2f2f3 42%, #ffffff 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+:root[data-theme="light"] .motto-light,
+:root[data-theme="light"] .motto-heavy {
+  background: none;
+  color: #111111;
+  -webkit-text-fill-color: #111111;
+  -webkit-text-stroke: 0;
+  text-shadow: none;
+}
+:root[data-theme="light"] .motto-gold,
+:root[data-theme="light"] .hero-type-glow {
+  display: none;
+  animation: none;
+}
+.motto-gold {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: -1;
+  width: max-content;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  font-weight: 700;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  -webkit-text-stroke: 2.6px transparent;
+  background: linear-gradient(
+    165deg,
+    #fff1bd 2%,
+    #fbd36a 29%,
+    #ac6918 62%,
+    #f5cc66 82%,
+    #fff0b4 100%
+  );
+  background-clip: text;
+  -webkit-background-clip: text;
+  transform: translateY(0.7px);
+  pointer-events: none;
+  opacity: 0.86;
+  animation: gold-outline-light 1.5s cubic-bezier(0.65, 0, 0.35, 1) 0.15s both;
+}
+.has-intro .motto-gold {
+  animation-delay: 2.1s;
+}
+@keyframes gold-outline-light {
+  0%,
+  100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+.hero-card {
+  padding: 0;
+  border: 1px solid color-mix(in srgb, var(--text) 38%, transparent);
+  border-radius: 7px;
+  background: var(--surface);
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  pointer-events: auto;
+  overflow: hidden;
+  -webkit-user-drag: none;
+}
+.hero-card .media-frame {
+  border-radius: 5px;
+}
+.hero-card[data-active="true"] {
+  border-color: color-mix(in srgb, var(--accent-secondary) 68%, var(--text));
+}
+.hero-card:focus-visible {
+  outline: 3px solid var(--accent-secondary);
+  outline-offset: 5px;
+}
+.hero-card img,
+.hero-card svg {
+  -webkit-user-drag: none;
+  user-select: none;
+}
+.hero-card .placeholder-category {
+  font-size: 13px;
+}
+.hero-card .placeholder-caption {
+  font-size: 35px;
+}
+.hero-carousel {
+  perspective: 1500px;
+  touch-action: pan-y;
+}
+.hero-carousel-controls .icon-button {
+  width: 46px;
+  height: 46px;
+}
+.hero-carousel-controls {
+  justify-content: flex-end;
+}
+.hero-carousel-controls > p {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+.interactive-grid {
+  background-image:
+    linear-gradient(
+      to right,
+      color-mix(in srgb, var(--text) 36%, transparent) 1.3px,
+      transparent 1.3px
+    ),
+    linear-gradient(
+      to bottom,
+      color-mix(in srgb, var(--text) 36%, transparent) 1.3px,
+      transparent 1.3px
+    );
+  background-size: 64px 64px;
+  mask-image: radial-gradient(
+    circle 330px at var(--pointer-x, 50%) var(--pointer-y, 50%),
+    #000 18%,
+    transparent 78%
+  );
+  transition: opacity 450ms ease;
+}
+@media (min-width: 1024px) {
+  .hero-content {
+    padding-top: 44px;
+  }
+  .hero-heading {
+    position: relative;
+    z-index: 3;
+  }
+  .hero-heading h1 {
+    font-size: clamp(88px, 8.4vw, 148px);
+  }
+  .hero-location {
+    font-size: 15px;
+  }
+  .hero-discipline {
+    font-size: 15px;
+  }
+  .hero-stage {
+    grid-template-columns: 45% 55%;
+    min-height: 650px;
+    margin-top: 20px;
+  }
+  .hero-copy {
+    padding-block: 34px;
+  }
+  .hero-motto {
+    font-size: clamp(76px, 6.3vw, 110px);
+    max-width: 5.4em;
+  }
+  .hero-main-action > p {
+    font-size: 15px;
+    max-width: 34ch;
+  }
+  .hero-main-action .button {
+    min-height: 60px;
+    padding: 18px 28px;
+    font-size: 17px;
+  }
+  .hero-carousel {
+    inset: 0 -13% 76px 7%;
+  }
+  .hero-card {
+    top: 49%;
+    width: clamp(245px, 20.5vw, 335px);
+  }
+  .hero-card .ratio-portrait {
+    aspect-ratio: 1/1.65;
+  }
+  .hero-carousel-controls {
+    padding-left: 30px;
+    bottom: 12px;
+  }
+  .hero-bottom {
+    font-size: 14px;
+    padding-block: 25px 28px;
+  }
+}
+@media (min-width: 1700px) {
+  .hero-stage {
+    min-height: 720px;
+  }
+  .hero-card {
+    width: 345px;
+  }
+}
+@media (min-width: 1024px) and (max-height: 820px) {
+  .hero-content {
+    padding-top: 28px;
+  }
+  .hero-heading h1 {
+    font-size: clamp(82px, 7.9vw, 130px);
+  }
+  .hero-stage {
+    min-height: 560px;
+    margin-top: 12px;
+  }
+  .hero-motto {
+    font-size: clamp(72px, 5.8vw, 94px);
+  }
+  .hero-card {
+    width: clamp(230px, 18.6vw, 300px);
+  }
+}
+@media (min-width: 768px) and (max-width: 1023px) {
+  .hero-card {
+    width: 190px;
+  }
+  .hero-carousel {
+    left: 18%;
+    right: -18%;
+    bottom: 60px;
+  }
+}
+@media (max-width: 767px) {
+  .hero-carousel-wrap {
+    margin-top: 64px;
+  }
+  .hero-card {
+    width: clamp(156px, 41vw, 190px);
+  }
+  .hero-card .placeholder-category {
+    font-size: 10px;
+  }
+  .hero-card .placeholder-caption {
+    font-size: 28px;
+  }
+  .hero-carousel {
+    bottom: 54px;
+  }
+  .hero-carousel-controls {
+    bottom: 0;
+  }
+  .motto-gold {
+    -webkit-text-stroke-width: 1.8px;
+    transform: translateY(0.5px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .motto-gold {
+    animation: none;
+    opacity: 0.72;
+  }
+}
+:root[data-motion="off"] .motto-gold {
+  animation: none;
+}

@@ -1,0 +1,181 @@
+.icon-button {
+  transition: border-color 160ms ease;
+}
+.brand-descriptor {
+  max-width: 110px;
+}
+:root {
+  --interactive-accent: var(--accent-secondary);
+}
+:root[data-theme="light"] {
+  --interactive-accent: #ae3a12;
+}
+.text-link:hover,.discount-number,.reviews-heading>p:first-child {
+  color: var(--interactive-accent);
+}
+.site-route {
+  animation-duration: var(--transition-duration);
+}
+@media (min-width:768px) and (max-width:1023px) {
+  .hero-carousel {
+    left: 18%;
+    right: -20%;
+  }
+  .hero-card {
+    width: 160px;
+  }
+  .hero-copy {
+    z-index: 5;
+  }
+}
+@media (max-width:767px) {
+  .hero-discipline {
+    font-size: 11px;
+    max-width: 340px;
+    line-height: 1.6;
+  }
+  .hero-discipline span+span::before {
+    content: ", ";
+  }
+  .hero-main-action>p {
+    font-size: 10px;
+  }
+  .hero-location {
+    font-size: 11px;
+  }
+  .section-heading p {
+    font-size: 14px;
+  }
+  .section-note {
+    font-size: 11px;
+  }
+  .section-heading-aside .text-link {
+    font-size: 12px;
+  }
+  .location-overview-item>p,.location-overview-item .location-hours {
+    font-size: 13px;
+  }
+  .location-overview-item .location-hours-label {
+    font-size: 11px;
+  }
+  .location-overview-item .text-link {
+    font-size: 12px;
+  }
+  .conditions-main p {
+    font-size: 14px;
+  }
+  .discount-line h4 {
+    font-size: 13px;
+  }
+  .discount-line p,.discount-list>.small-note {
+    font-size: 11px;
+  }
+  .map-selector-caption {
+    font-size: 12px;
+  }
+  .location-option strong {
+    font-size: 13px;
+  }
+  .location-option>span:nth-child(2)>span {
+    font-size: 11px;
+  }
+  .map-selector>.small-note {
+    font-size: 11px;
+  }
+  .map-provider-switch button {
+    font-size: 12px;
+  }
+  .map-address {
+    font-size: 14px;
+  }
+  .map-location-detail dt {
+    font-size: 11px;
+  }
+  .map-location-detail dd {
+    font-size: 13px;
+  }
+  .map-external-note {
+    font-size: 11px;
+  }
+  .map-fallback p {
+    font-size: 13px;
+  }
+  .map-location-detail .button {
+    font-size: 12px;
+  }
+  .coach-copy .coach-role {
+    font-size: 12px;
+  }
+  .coach-qualifications>span {
+    font-size: 12px;
+  }
+  .coach-biography {
+    font-size: 14px;
+  }
+  .coach-portrait-caption>span {
+    font-size: 11px;
+  }
+  .medal-label {
+    font-size: 11px;
+  }
+  .medal-label>span:last-child {
+    font-size: 10px;
+  }
+  .medal-footnote>p:first-child,.medal-footnote>p:last-child {
+    font-size: 11px;
+  }
+  .timeline-heading .text-link {
+    font-size: 11px;
+  }
+  .event-description p {
+    font-size: 13px;
+  }
+  .video-description>p {
+    font-size: 13px;
+  }
+  .video-description .button,.video-description .text-link {
+    font-size: 12px;
+  }
+  .reviews-heading h2+p,.reviews-heading>p:first-child {
+    font-size: 12px;
+  }
+  .reviews-empty p {
+    font-size: 14px;
+  }
+  .reviews-empty .text-link {
+    font-size: 12px;
+  }
+  .contacts-heading p {
+    font-size: 14px;
+  }
+  .contact-hint {
+    font-size: 11px;
+  }
+  .contact-email>.text-link {
+    font-size: 12px;
+  }
+  .contact-cta>.text-link {
+    font-size: 12px;
+  }
+  .contacts-socials>span {
+    font-size: 11px;
+  }
+  .contacts-socials a {
+    font-size: 12px;
+  }
+  .footer-inner>p {
+    font-size: 10px;
+  }
+  .footer-links {
+    font-size: 10px;
+  }
+  .page-intro>p:last-child,.page-contact-block>p {
+    font-size: 14px;
+  }
+  .community-banner p {
+    font-size: 12px;
+  }
+  .hero-carousel-controls>p,.gallery-bottom>p {
+    font-size: 10px;
+  }
+}

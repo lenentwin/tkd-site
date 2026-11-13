@@ -1,0 +1,5 @@
+* text=auto eol=lf
+# Preserve the exact supplied requirement documents for SHA-256 verification.
+docs/sources/Prompt.md -text
+docs/sources/AGENT_ASSIGNMENT.md -text
+*.woff2 -text
