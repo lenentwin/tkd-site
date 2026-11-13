@@ -5,10 +5,11 @@
 ## Автоматические результаты
 
 - PHP 8.3.36 CLI на Windows: синтаксис всех PHP-файлов PASS; 18 групп OAuth/security-тестов PASS (`php backend/tests/run.php`). Включён тест polling /me из второй вкладки во время OAuth: он не уничтожает pending state. Официальный portable PHP проверен по SHA-256 из windows.php.net и не установлен системно.
-- [GitHub Actions, PHP 8.3 + MySQL 8.4](https://github.com/lenentwin/tkd-site/actions/runs/43471559021): SUCCESS. Миграции, настоящий PDO/MySQL, восемь параллельных регистраций (один пользователь), восемь параллельных claim state (одна успешная), повторный вход, роли/blocked, полный поток приложения с реальной DB и имитацией только ответов Яндекса. Фактический PHP HTTP entrypoint: health/me/start/callback errors/CORS/cookie/POST logout и последующий 401. Очистка expired records PASS.
+- [GitHub Actions, PHP 8.3 + MySQL 8.4](https://github.com/lenentwin/tkd-site/actions/workflows/backend.yml?query=branch%3Acodex%2Fyandex-auth): SUCCESS. Миграции, настоящий PDO/MySQL, восемь параллельных регистраций (один пользователь), восемь параллельных claim state (одна успешная), повторный вход, роли/blocked, полный поток приложения с реальной DB и имитацией только ответов Яндекса. Фактический PHP HTTP entrypoint: health/me/start/callback errors/CORS/cookie/POST logout и последующий 401. Очистка expired records PASS.
 - Frontend: lint, TypeScript/build PASS; 18 unit-тестов PASS (4 файла). Vitest исключает .cache, чтобы не запускать копии тестов из временного worktree; исходные тесты не удалены.
 - Вариант `VITE_AUTH_ENABLED=true`, API=https://api.mft39.ru: production build PASS; 12 браузерных сценариев Edge на 390/1440 px PASS. Анонимный вход игнорирует demo storage, кнопка переходит на серверный OAuth start, профиль из API открывает кабинет, ошибка выхода сохраняет сессию/показывает ошибку, успех выхода открывает login, offline явно обозначен. 0 pageerror. Ответы API в этом тесте фиктивные и перехватываются только тестовым Playwright-скриптом.
 - CSS не менялся. Конфигурация CORS/сессий проверена unit/HTTP; no-secret config.example и состав public/ проверены тестом. config.local.php и резервные имена исключены .gitignore. Backend/tests не входит в дистрибутив для хостинга.
+- С выключенным auth-флагом выполнен scripts/qa-release.mjs: 30 сочетаний маршрутов/ширин, обе темы, CSP и отсутствие демонстрационных данных в production; 0 ошибок JS и POST, артефакт PASS. Полные настройки scopes/логов/публичного каталога остаются ручной приёмкой хостинга.
 
 ## Покрытие сценариев из задания
 
