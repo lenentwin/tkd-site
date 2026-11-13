@@ -17,6 +17,7 @@ interface Store
 final class MysqlStore implements Store
 {
     public function __construct(private \PDO $pdo) {}
+    public function connection(): \PDO { return $this->pdo; }
 
     public static function connect(Config $config): self
     {

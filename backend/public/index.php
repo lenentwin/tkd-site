@@ -17,7 +17,12 @@ try {
     }
     if (PHP_VERSION_ID < 80300 || !extension_loaded('pdo_mysql') || !extension_loaded('curl')) { throw new RuntimeException('Unsupported runtime'); }
     $config = \Mft39\Config::load($privateRoot);
-    $app = new \Mft39\App($config, \Mft39\MysqlStore::connect($config), new \Mft39\Yandex($config, new \Mft39\CurlHttpClient()));
+    $store = \Mft39\MysqlStore::connect($config);
+    if ($request->path === '/api/club') {
+        $body = $request->method === 'POST' ? file_get_contents('php://input', false, null, 0, 131073) : '';
+        (new \Mft39\Club\Controller($config, $store))->handle($request, $body)->send();
+    }
+    $app = new \Mft39\App($config, $store, new \Mft39\Yandex($config, new \Mft39\CurlHttpClient()));
     $app->handle($request)->send();
 } catch (Throwable) {
     // Never log exception messages, query strings, cookies or upstream bodies.

@@ -40,3 +40,5 @@ jobs:
         run: php8.3 backend/tests/run.php
       - name: MySQL, concurrency and HTTP integration
         run: php8.3 backend/tests/mysql.php
+      - name: Club enrollment, scopes, monthly accounting and concurrency
+        run: php8.3 backend/tests/club.php
