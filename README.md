@@ -26,7 +26,15 @@ npm run preview
 
 При отсутствии реальных фотографий Hero использует фирменные векторные иллюстрации; пустая фотогалерея скрыта. Это не фотографии воспитанников. Перед полноценным запуском добавьте согласованные фотографии/видеоролик и проверьте права на предоставленные веб-шрифты. Текущий src сохраняет все сцены и управление для реальных материалов.
 
-## Cloudflare Pages
+## GitHub Pages: mft39.ru
+
+Публикация из `main` выполняется через `.github/workflows/deploy.yml`: Node.js 24, `npm ci`, lint/test, `npm run build`, подготовка Pages и загрузка только `dist` официальными `actions/upload-pages-artifact` и `actions/deploy-pages`. Исходный `index.html` с `/src/main.tsx` публиковать нельзя. В Settings → Pages → Build and deployment → Source выберите **GitHub Actions**, сохранив Custom domain `mft39.ru`.
+
+Vite использует `base: "/"`. Корневой `CNAME` сохранён и копируется в артефакт. Необязательная Actions repository variable `VITE_API_BASE_URL` содержит только публичный HTTPS-адрес API; без неё сборка сохраняет состояние отсутствия подключения. Секреты авторизации в Actions variables/VITE_* не добавляются.
+
+Для прямого открытия маршрутов `node scripts/prepare-pages.mjs` создаёт `dist/404.html` из собранного `index.html`. React Router получает исходный путь, параметры и якорь без перенаправлений. GitHub Pages отвечает HTTP 404 на отсутствующий статический путь, но загружает рабочую страницу приложения; это ограничение платформы для SPA. `_headers` и `_redirects` относятся к Cloudflare и не применяются GitHub Pages. Подробности и проверка: `docs/GITHUB_PAGES.md`.
+
+## Cloudflare Pages (альтернативный хостинг)
 
 Подключите GitHub lenentwin/tkd-site в Pages (Git integration), framework preset Vite:
 
