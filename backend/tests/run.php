@@ -46,6 +46,12 @@ test('repeat login, no duplicate, cannot raise role', function () {
     $r = finish($a, $h, $old, $q['state'], ['role' => 'head_trainer']);
     check(count($s->users) === 1 && profile($a, cookie($r))->body['user']['role'] === 'trainer');
 });
+test('anonymous profile polling in another tab preserves pending OAuth session', function () {
+    [$a, $s, $h] = fixture(); [$sid, $q] = begin($a);
+    $me = profile($a, $sid, 1000);
+    check($me->status === 401 && !isset($me->headers['Set-Cookie']) && $s->session(tokenHash($sid)) !== null);
+    check(finish($a, $h, $sid, $q['state'])->status === 302);
+});
 test('wrong state, wrong session, expired state', function () {
     [$a, , $h] = fixture(); [$sid, $q] = begin($a);
     check(callback($a, $sid, ['state' => str_repeat('x', 43), 'code' => 'x'])->body['error'] === 'invalid_state');

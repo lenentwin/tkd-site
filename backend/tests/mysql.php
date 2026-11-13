@@ -33,6 +33,7 @@ echo "PASS concurrent callbacks: exactly one state claim in MySQL\n";
 
 $http=new FakeHttp(); $app=new App(config(),$store,new Yandex(config(),$http));
 $start=$app->handle(new Request('GET','/auth/yandex/start')); parse_str(parse_url($start->headers['Location'],PHP_URL_QUERY),$q); $old=cookie($start);
+check($app->handle(new Request('GET','/api/me',cookies:['__Host-mft39'=>$old]))->status===401 && $store->session(tokenHash($old))!==null);
 $http->replies=[['access_token'=>'fictional-ci-token','token_type'=>'bearer','expires_in'=>3600],['id'=>'999990003','client_id'=>str_repeat('a',32)]];
 $done=$app->handle(new Request('GET','/auth/yandex/callback',['state'=>$q['state'],'code'=>'fictional'],cookies:['__Host-mft39'=>$old]));
 $sid=cookie($done); check($done->status===302 && $store->session(tokenHash($old))===null);

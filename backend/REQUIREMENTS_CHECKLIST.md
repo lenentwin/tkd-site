@@ -13,7 +13,7 @@
 | 7. CORS | точный mft39.ru, Credentials, ограниченный OPTIONS, reject чужих Origin; клиент credentials:include |
 | 8. Конфигурация | приватный config.local.php и environment; пример без секретов, gitignore, HTTPS/таймауты/body cap, фиксированные ошибки, без stack/токенов в логах приложения. Журналы хостинга настраивает владелец |
 | 9. ISPmanager | физические directory/index.php endpoints без root/rewrite; slash для POST, альтернативный callback index.php; manual-check public root/open_basedir/логи/CA/ext |
-| 10. Тесты | 17 групп PHP, 18 frontend; MySQL 8.4 и 8 параллельных регистраций/claim state; PHP HTTP entrypoints; 12 browser scenarios с фиктивным API. См. TEST_REPORT |
+| 10. Тесты | 18 групп PHP, 18 frontend; MySQL 8.4 и 8 параллельных регистраций/claim state; PHP HTTP entrypoints; 12 browser scenarios с фиктивным API. См. TEST_REPORT |
 | 11. Результат | полный backend, миграция, конфигурация, API, инструкции MySQL/OAuth/ISPmanager/приёмки. Реальные настройки делает владелец, секреты не запрашиваются |
 | 12. Ограничения | нет записи/анкет/залов/APK/оплат/admin; дизайн/CSS не менялись. Live OAuth и Cludex не объявляются проверенными |
 

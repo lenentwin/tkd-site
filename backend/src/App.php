@@ -76,6 +76,11 @@ final class App
                 return $response;
             }
             $session = $hash === null ? null : $this->store->session($hash);
+            // Another tab may poll /me while the browser is at Yandex. A valid
+            // pre-auth session is anonymous, but must survive until callback.
+            if ($session !== null && $session['user_id'] === null && $now < (int)$session['expires_at']) {
+                throw new ApiError(401, 'unauthenticated');
+            }
             if ($session === null || $session['user_id'] === null || $now >= (int)$session['expires_at']
                 || $now - (int)$session['last_seen_at'] >= $this->config->get('SESSION_IDLE_TTL')) {
                 if ($hash !== null) { $this->store->deleteSession($hash); }
