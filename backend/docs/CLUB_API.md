@@ -34,11 +34,12 @@ Student: `{id,locationId,lastName,firstName,middleName,age,ageRecordedOn,status,
 {
   "students":[{"lastName":"Фиктивный","firstName":"Пример","middleName":"","age":10}],
   "guardian":{"lastName":"Фиктивный","firstName":"Родитель","middleName":"","phone":"+70000000000","relationship":"parent"},
-  "locationId":"chelnokova","requestedDate":"2027-01-20","comment":"Синтетический пример"
+  "locationId":"chelnokova","requestedDate":"2027-01-20","comment":"Синтетический пример",
+  "consent":true,"consentVersion":"club-2026-11-13"
 }
 ```
 
-Names 1–80 letters/spaces/hyphen/apostrophe; middle name optional; integer age 1–120; valid date >= today's Kaliningrad date; comment optional up to 1000 characters. Representative required if any minor. Optional students[].id may reuse only an existing OWN linked student, with matching server name/age. Without id, matching is only within the applicant's own family. Hall change/inactive reactivation require the coach. Entire batch is transactional. Response `{batchId,applicationIds,replayed}`; pending is actually persisted. Reuse the SAME key and identical logical input after uncertain network failure; same key/different input =409. Duplicate student/hall/date (including already decided applications) =409. UI cannot assume a successful retry without a validated reply or fetching its actual saved requests.
+Names 1–80 letters/spaces/hyphen/apostrophe; middle name optional; integer age 1–120; valid date >= today's Kaliningrad date; comment optional up to 1000 characters. Representative required if any minor. Explicit consent:true and the exact consentVersion club-2026-11-13 are mandatory; false/missing/old version returns422 before saving personal records. The batch stores the authenticated applicant ID, consent_version and consented_at (server receipt time), never a client-provided account/time. The checkbox is unchecked by default and confirms processing for enrollment, communications and training/monthly accounting; it includes parent/guardian authority for minors. This is a recorded self-attestation, not a verification of legal guardianship. Optional students[].id may reuse only an existing OWN linked student, with matching server name/age. Without id, matching is only within the applicant's own family. Hall change/inactive reactivation require the coach. Entire batch is transactional. Response `{batchId,applicationIds,replayed}`; pending is actually persisted. Reuse the SAME key and identical logical input after uncertain network failure; same key/different input =409. Duplicate student/hall/date (including already decided applications) =409. UI cannot assume a successful retry without a validated reply or fetching its actual saved requests.
 
 Other POST bodies/results:
 

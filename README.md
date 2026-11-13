@@ -1,67 +1,71 @@
 # MFT39
 
-Сайт клуба тхэквондо МФТ в Калининграде. React 19, TypeScript strict, Vite, GSAP. PHP backend авторизации подготовлен в backend/; production-подключение включается после настройки российского хостинга.
+Сайт клуба тхэквондо МФТ в Калининграде: React 19, TypeScript strict, Vite, GSAP. Российский backend: PHP 8.3, PDO MySQL, Яндекс OAuth, серверные сессии, ученики, заявки и ручные месячные отметки оплаты. Сайт mft39.ru публикуется из dist через GitHub Pages; PHP и MySQL размещаются отдельно на api.mft39.ru (Cludex/ISPmanager).
 
 ## Локальный запуск
 
-Node.js 24 LTS (см. .node-version), npm. Из корня репозитория:
+Node.js 24 (см. .node-version):
 
 ```sh
 npm ci
 npm run dev
 ```
 
-Адрес: http://127.0.0.1:5173. Локальный редактор /editor, демонстрационные вход/кабинет/запись доступны только в режиме разработки. Они не являются настоящей авторизацией. Контент редактора хранится в браузере. Для production перенесите одобренные тексты в src/content/site.content.ts, фотографии в public/images и задайте относительные src. Ссылки idb: и экспорт без файлов не переносятся на сервер автоматически.
+Адрес http://127.0.0.1:5173. DEV-редактор /editor и демонстрационный вход не являются настоящей авторизацией и исключены из production. CMS-снимки хранятся только локально; одобренный контент для публикации переносится в src/content/site.content.ts и public/images. Шрифты Bebas Neue Pro сохранены; права на веб-использование подтверждает владелец. Векторные изображения Hero не выдаются за фотографии воспитанников.
 
-## Проверки и production
+## Проверки
 
 ```sh
 npm run lint
+npm run typecheck
 npm test
 npm run build
 npm run preview
 ```
 
-Сборка: dist. Preview: http://127.0.0.1:4173. Production исключает demo-адаптер и редактор; /editor показывает страницу «не найдена». /login использует Яндекс ID при включённом VITE_AUTH_ENABLED; /account и его разделы проверяют серверную сессию. /booking перенаправляет в кабинет либо на вход. Форма записи находится в /account/book: несколько учеников и представитель, только локальная проверка полей, без отправки/Storage/IndexedDB и ложного подтверждения. Локальные CMS-снимки и сообщения редактора игнорируются в production. Текущий UX/QA: docs/revisions/ACCOUNT_2026-11-13.md.
+Сборка dist, preview http://127.0.0.1:4173. Для production-проверки реального кабинета задайте VITE_AUTH_ENABLED=true и VITE_API_BASE_URL=https://api.mft39.ru **до сборки**. Фиктивные браузерные профили в scripts/qa-account.mjs и scripts/qa-club.mjs применяются только к локальной сборке. Они не заменяют интеграционные MySQL-тесты или живой OAuth.
 
-При отсутствии реальных фотографий Hero использует фирменные векторные иллюстрации; пустая фотогалерея скрыта. Это не фотографии воспитанников. Перед полноценным запуском добавьте согласованные фотографии/видеоролик и проверьте права на предоставленные веб-шрифты. Текущий src сохраняет все сцены и управление для реальных материалов.
+PHP-проверки: `php backend/tests/run.php`, `php backend/tests/club-rules.php`. Реальная тестовая MySQL 8.4, конкурентные транзакции и HTTP entrypoints проверяются workflow backend.yml в отдельной mft39_auth_test с синтетическими данными. Никогда не запускайте backend/tests/ против действующей базы.
+
+## Кабинет и система секции
+
+/account и все подразделы требуют проверенной серверной сессии. /login использует Яндекс ID; /booking перенаправляет в кабинет или на вход. /editor в production недоступен. Служебные страницы noindex,nofollow; публичные страницы и существующие анимации/темы сохранены.
+
+/account/book: несколько учеников, ФИО, возраст, зал, желаемая дата, необязательный комментарий и представитель для несовершеннолетних. Реальный POST идёт исключительно на российский API; сохранение подтверждается только проверенным ответом. Idempotency key и транзакция защищают повторы. Перед отправкой требуется явное согласие; сервер проверяет его версию и сохраняет факт подтверждения. Черновики и ключи доступа не сохраняются в Storage/IndexedDB/URL. /account/bookings показывает собственные заявки, учеников и историю.
+
+/account/trainer: заявки назначенных залов, принять/отклонить, зачисленные ученики, trial/permanent/inactive, месячная оплата и история. head_trainer/admin видят все залы. Права и версии проверяются на сервере, а не только скрытием кнопок. /account/devices создаёт личный отзываемый 8-часовой доступ для будущего подключения Android. Исходников Android здесь нет; APK не интегрирован.
+
+Новый календарный месяц считается unpaid в Europe/Kaliningrad без CRON и перезаписи прошлых месяцев. Исправления аудируются; устаревшая версия или старый текущий месяц дают409 без скрытого перезаписывания. Банковские платежи не реализуются.
+
+**Установка системы на действующий backend ещё требуется:** frontend разрешает отправку только после успешного bootstrap схемы 2. Пока файлы PHP и миграция 002 не установлены на Cludex, отображается отсутствие сервиса и отправка отключена. Код в GitHub сам по себе не меняет действующую базу.
+
+Документация:
+
+- [API учеников/заявок/оплат](backend/docs/CLUB_API.md).
+- [Установка обновления на существующую базу](backend/docs/DEPLOYMENT_CLUB_RU.md).
+- [Контракт интеграции Android](backend/docs/ANDROID_CLUB.md).
+- [Автоматические проверки PHP/MySQL](https://github.com/lenentwin/tkd-site/actions/workflows/backend.yml).
+- [Исходная настройка OAuth](backend/docs/DEPLOYMENT_RU.md) и [контракт авторизации](backend/docs/API.md).
 
 ## GitHub Pages: mft39.ru
 
-Публикация из `main` выполняется через `.github/workflows/deploy.yml`: Node.js 24, `npm ci`, lint/test, `npm run build`, подготовка Pages и загрузка только `dist` официальными `actions/upload-pages-artifact` и `actions/deploy-pages`. Исходный `index.html` с `/src/main.tsx` публиковать нельзя. В Settings → Pages → Build and deployment → Source выберите **GitHub Actions**, сохранив Custom domain `mft39.ru`.
+main → .github/workflows/deploy.yml → Node24, npm ci, lint/test/build → prepare-pages → upload-pages-artifact/deploy-pages. Публикуется только dist, не исходный index.html с /src/main.tsx и не backend/. Settings → Pages → Source: GitHub Actions; Custom domain mft39.ru. CNAME и Vite base=/ сохранены. Секреты PHP в Actions не нужны.
 
-Vite использует `base: "/"`. Корневой `CNAME` сохранён и копируется в артефакт. Необязательная Actions repository variable `VITE_API_BASE_URL` содержит только публичный HTTPS-адрес API; без неё сборка сохраняет состояние отсутствия подключения. Секреты авторизации в Actions variables/VITE_* не добавляются.
+Repository Variables:
 
-Для прямого открытия маршрутов `node scripts/prepare-pages.mjs` создаёт `dist/404.html` из собранного `index.html`. React Router получает исходный путь, параметры и якорь без перенаправлений. GitHub Pages отвечает HTTP 404 на отсутствующий статический путь, но загружает рабочую страницу приложения; это ограничение платформы для SPA. `_headers` и `_redirects` относятся к Cloudflare и не применяются GitHub Pages. Подробности и проверка: `docs/GITHUB_PAGES.md`.
+| Variable | Значение |
+|---|---|
+| VITE_AUTH_ENABLED | true |
+| VITE_API_BASE_URL | https://api.mft39.ru |
 
-## Cloudflare Pages (альтернативный хостинг)
+prepare-pages.mjs копирует CNAME и создаёт dist/404.html из index.html. Router получает исходный внутренний путь, query и hash. GitHub Pages отвечает HTTP404 для отсутствующего статического пути, но SPA загружается; подробности в docs/GITHUB_PAGES.md. _headers/_redirects применяются только на Cloudflare, не GitHub Pages.
 
-Подключите GitHub lenentwin/tkd-site в Pages (Git integration), framework preset Vite:
+## Cloudflare Pages, альтернативный frontend
 
-| Параметр | Значение |
-| --- | --- |
-| Production branch | main |
-| Root directory | / (корень репозитория; поле можно оставить пустым) |
-| Build command | npm run build |
-| Build output directory | dist |
-| NODE_VERSION | 24 |
-| VITE_API_BASE_URL | оставить пустым |
+Git integration, Vite preset, branch main, root / (пустое поле), build `npm run build`, output `dist`. NODE_VERSION=24; VITE_AUTH_ENABLED=true; VITE_API_BASE_URL=https://api.mft39.ru. Для Cloudflare НЕ запускать prepare-pages.mjs: используется нативный SPA fallback без верхнего 404.html. public/_headers задаёт CSP и cache; public/_redirects поясняет fallback. Деплой Cloudflare автоматически не запускается. D1, Functions, Workers и внешние БД не подключаются. Backend остаётся в России, DNS/авторизация не меняются.
 
-Установка зависимостей по package-lock.json; локально проверяется npm ci. Используется нативный SPA fallback Pages без верхнеуровневого 404.html (пояснение в public/_redirects), защитные заголовки и кэш статических hashed assets в public/_headers. Здесь нет Pages Functions, Workers, D1 или иной базы. CSP запрещает сторонние скрипты и отправку форм; inline styles разрешены для React/GSAP, inline scripts/eval запрещены. Внешние карты и видео разрешены только с указанных официальных origins.
+## Секреты и данные
 
-Vite preview не применяет Cloudflare _headers/_redirects как edge-конфигурацию. После первого развёртывания проверьте прямое открытие /coach, /contacts и /booking, реальный CSP и iframe карт. Настройте собственный домен, SEO/OG и предварительный рендер при необходимости. Индексация служебных маршрутов закрыта; публичные страницы открыты. Деплой Cloudflare не выполняется этим репозиторием автоматически.
+.env.example содержит только публичные VITE-параметры. Yandex Client Secret, пароль MySQL, RATE_LIMIT_KEY хранятся исключительно в приватном config.local.php или окружении PHP на российском сервере. config.local.php и его копии, .env, архивы/кэш/дампы исключены из Git. Не загружать их даже в приватный репозиторий. Не включать в логи Cookie, Authorization, OAuth query, тела заявок или персональные данные. Нет внешней аналитики/обработчика ошибок с ПД. Серверные SQL-миграции, секреты и роль/grant CLI никогда не должны быть доступны по HTTP. Настоящий OAuth и окончательная приёмка обновления на хостинге остаются проверкой владельца.
 
-## Backend и Яндекс ID
-
-Нативный PHP 8.3/PDO/cURL backend находится в `backend/`. Полная установка MySQL, config.local.php, Яндекс OAuth и ISPmanager описана в `backend/docs/DEPLOYMENT_RU.md`; контракт API — `backend/docs/API.md`. Сервер выполняет реальный code exchange с PKCE S256, хранит только собственные сессии, защищает logout через Origin+CSRF. Фиктивный Яндекс существует только в tests/, не загружается на хостинг.
-
-`.env.example` содержит только публичные `VITE_API_BASE_URL` и `VITE_AUTH_ENABLED`. Для входа задайте адрес https://api.mft39.ru и флаг true в Actions Variables и пересоберите Pages; false оставляет честное состояние отсутствия подключения. Существующие LoginPage/AccountPage/AuthProvider поддерживают проверенный серверный профиль и ошибки/повтор проверки. Backend уже отвечает на анонимные health/me/start, но настоящий OAuth-вход требует ручной приёмки. Кабинет использует существующие дизайн-токены, шрифты, темы и GSAP. Отправка заявок остаётся отключённой. DEV демонстрация сохранена отдельно.
-
-Client Secret и пароль MySQL хранятся исключительно в приватном config.local.php на российском сервере или PHP-FPM environment. В VITE_*, GitHub/Pages, localStorage и URL frontend секретов нет. База и live OAuth владельцем ещё не настроены/не проверены; успешные тесты с mock Яндексом не заменяют ручной реальный вход. Backend не развёртывается workflow GitHub Pages: туда попадает только Vite dist.
-
-Не включайте Cloudflare Web Analytics, Zaraz, сторонние error/форм-сервисы для передачи анкет. Ни анкеты, ни токены не должны попадать в GitHub, Cloudflare Functions/D1 или логи запросов. Публичные контакты клуба уже были предоставлены как контент.
-
-## Документация
-
-Текущие результаты и границы: docs/RELEASE_AUDIT.md, docs/RELEASE_AUDIT_INVENTORY.md и docs/DEPLOYMENT.md. Исторические отчёты описывают предыдущий локальный прототип; при конфликте production-поведение определяют эти документы и текущий код. Оригинальные ТЗ и архивы Fonts сохранены локально и исключены из Git; REQUIREMENTS_CHECKLIST.md сохраняет контроль 39 разделов. Исходная лицензия проекта и лицензия веб-шрифтов не подменяются выдуманной open-source лицензией.
-
+В репозитории находятся исходники, воспроизводимая сборка, автоматические тесты и необходимые инструкции. Внутренние ТЗ, отчёты агентов, старые QA-материалы, архивы и локальная конфигурация не публикуются. Лицензии проекта и шрифтов не подменяются выдуманной open-source лицензией.

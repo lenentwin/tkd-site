@@ -10,7 +10,7 @@ Workflow `.github/workflows/deploy.yml` запускается при push в ma
 
 Vite base равен `/`, поскольку сайт размещён на собственном домене. Существующий корневой CNAME не удаляется и копируется в dist/CNAME. В настройках Pages сохраняется mft39.ru. Автоматический выбор base по имени репозитория не используется.
 
-Repository variable VITE_API_BASE_URL необязательна. Это только публичный HTTPS-адрес, не секрет. Пустое значение сохраняет текущую production-страницу отсутствия подключения. База данных и реальный OAuth этим изменением не подключаются.
+Repository Variables: VITE_AUTH_ENABLED=true и VITE_API_BASE_URL=https://api.mft39.ru. Это публичная конфигурация, не секреты. Сам PHP/MySQL workflow не развёртывает: для Club API требуется отдельная установка backend и миграции на российском сервере.
 
 ## Прямые ссылки React Router
 
@@ -18,7 +18,7 @@ Repository variable VITE_API_BASE_URL необязательна. Это тол�
 
 Ограничение GitHub Pages: ответ такой навигации имеет HTTP 404, хотя приложение отображает нужный экран. Серверные rewrite с HTTP 200 платформа не поддерживает. Для строгих SEO-требований нужен отдельный этап prerender/SSG или хостинг с SPA rewrite. HashRouter не используется, существующие ссылки и якоря не меняются.
 
-404.html создаётся только специальным шагом Pages. Обычная npm run build не создаёт его и сохраняет нативный SPA fallback для возможного Cloudflare Pages. Файлы _headers/_redirects GitHub Pages не интерпретирует; наличие этих файлов не доказывает установку HTTP-заголовков.
+404.html создаётся только специальным шагом Pages. Обычная npm run build не создаёт его и сохраняет нативный SPA fallback для возможного Cloudflare Pages. Файлы _headers/_redirects GitHub Pages не интерпретирует. prepare-pages.mjs переносит поддерживаемые CSP-директивы из public/_headers в HTML meta перед скриптами и добавляет referrer meta; это действует на главной и SPA fallback без настройки заголовков. frame-ancestors/reporting/sandbox в meta не поддерживаются и не добавляются. Полный набор HTTP-заголовков остаётся возможностью соответствующего хостинга, например Cloudflare. Обычная Vite dev-сборка не меняется; inline styles сохранены для React/GSAP. [Ограничения CSP meta](https://www.w3.org/TR/CSP3/#meta-element).
 
 ## Проверка
 
