@@ -1,7 +1,6 @@
 import { Fragment, useRef, useState } from "react";
-import { Link } from "react-router-dom";
 import { useContent } from "../../app/providers/ContentProvider";
-import { useAuth } from "../../app/providers/AuthProvider";
+import AccountLink from "../../components/presentation/AccountLink";
 import {
   useMediaQuery,
   useMotionPreference,
@@ -24,7 +23,6 @@ function seenIntro() {
 
 export default function HeroSection() {
   const { content } = useContent();
-  const { session } = useAuth();
   const root = useRef<HTMLElement>(null);
   const reduced = useMotionPreference();
   const mobile = useMediaQuery("(max-width: 767px)");
@@ -77,10 +75,7 @@ export default function HeroSection() {
               <span className="hero-type-glow" aria-hidden="true" />
             </p>
             <div className="hero-main-action">
-              <Link className="button" to={session ? "/booking" : "/login"}>
-                {content.brand.bookingLabel}
-                <Icon name="arrow" />
-              </Link>
+              <AccountLink />
               <p>Группу и расписание обсудим с тренером</p>
             </div>
           </div>

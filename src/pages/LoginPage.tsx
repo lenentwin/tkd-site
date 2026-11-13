@@ -1,16 +1,18 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "../app/providers/AuthProvider";
 import { DisplayText } from "../components/presentation/DisplayText";
 import { yandexAuthEnabled } from "../services/backend";
 
 export default function LoginPage() {
-  const { session, signIn, loading, unavailable } = useAuth();
+  const { session, signIn, loading, unavailable, refresh } = useAuth();
   const navigate = useNavigate();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const localDemo = import.meta.env.DEV && !yandexAuthEnabled;
   async function enter() {
     setBusy(true);
+    setError("");
     try {
       await signIn();
       if (!yandexAuthEnabled) navigate("/account");
@@ -20,6 +22,7 @@ export default function LoginPage() {
       setBusy(false);
     }
   }
+  if (session && !unavailable && !loading) return <Navigate to="/account" replace />;
   return (
     <main id="main" className="page-shell demo-page container">
       <div className="demo-heading">
@@ -29,14 +32,14 @@ export default function LoginPage() {
           <br />в зале
         </h1>
         <p>
-          {yandexAuthEnabled ? "Войдите через Яндекс ID в личный кабинет MFT39." : "В будущем здесь можно будет войти через Яндекс и записаться на тренировку."}
+          Войдите через Яндекс ID, чтобы открыть личный кабинет и раздел записи на тренировку.
         </p>
       </div>
       <section className="demo-panel" aria-labelledby="login-title">
-        {!yandexAuthEnabled && <span className="demo-tag">Демонстрация интерфейса</span>}
+        {localDemo && <span className="demo-tag">Локальная демонстрация</span>}
         <h2 id="login-title">Вход в MFT39</h2>
         <p>
-          {yandexAuthEnabled ? "Подтверждение входа откроется на сайте Яндекса. Пароль вводится только там." : "Настоящая авторизация пока не подключена. Кнопка откроет тестовый кабинет без передачи данных в Яндекс."}
+          Подтверждение входа откроется на сайте Яндекса. Пароль вводится только там.
         </p>
         {session ? (
           <Link className="button" to="/account">
@@ -46,16 +49,18 @@ export default function LoginPage() {
           <button
             className="yandex-button"
             onClick={() => void enter()}
-            disabled={busy || loading}
+            disabled={busy || loading || (!yandexAuthEnabled && !localDemo)}
           >
             <span aria-hidden="true">Я</span>
-            {busy ? "Открываем кабинет…" : "Войти через Яндекс"}
+            {busy ? "Подключаемся…" : localDemo ? "Открыть локальную демонстрацию" : "Войти через Яндекс"}
           </button>
         )}
         {error && <p role="alert"><DisplayText text={error} /></p>}
-        {unavailable && <p role="status">Сервис входа временно недоступен. Попробуйте позже.</p>}
+        {loading && <p role="status">Проверяем сессию…</p>}
+        {unavailable && <div role="status"><p>Сервис входа временно недоступен. Попробуйте позже.</p><button className="text-link" onClick={() => void refresh()}>Повторить проверку</button></div>}
+        {!yandexAuthEnabled && !localDemo && <p role="status">Вход ещё не подключён. Пока можно связаться с тренером.</p>}
         <p className="demo-note">
-          {yandexAuthEnabled ? "MFT39 получает только идентификатор аккаунта для входа." : "Здесь нет ввода паролей и подключения к аккаунту Яндекса."}
+          Аккаунт может принадлежать родителю. Данные ученика указываются отдельно в кабинете.
         </p>
         <Link to="/contacts">Связаться с тренером</Link>
       </section>

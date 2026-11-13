@@ -28,7 +28,7 @@ export const defaultContent: SiteContent = {
     motto: "День без тренировки - потерянный день",
     description:
       "Занятия тхэквондо МФТ для детей с четырёх лет, подростков и взрослых в Калининграде.",
-    bookingLabel: "Записаться на тренировку",
+    bookingLabel: "Войти в личный кабинет",
   },
   sections: [
     { id: "hero", title: "Тхэквондо МФТ", intro: "Калининград", enabled: true },
@@ -295,13 +295,15 @@ export const defaultContent: SiteContent = {
     },
     "/login": {
       title: import.meta.env.DEV ? "Демонстрационный вход — MFT39" : "Вход — MFT39",
-      description:
-        "Вход через Яндекс пока не подключён. Свяжитесь с тренером.",
+      description: "Вход в личный кабинет MFT39 через Яндекс ID.",
     },
     "/account": {
       title: import.meta.env.DEV ? "Демонстрационный кабинет — MFT39" : "Личный кабинет — MFT39",
-      description: "Личный кабинет пока не подключён.",
+      description: "Личный кабинет пользователя MFT39.",
     },
+    "/account/bookings": { title: "Мои тренировки — MFT39", description: "Тренировки в личном кабинете MFT39." },
+    "/account/book": { title: "Записаться на тренировку — MFT39", description: "Подготовка заявки на тренировку. Онлайн-отправка пока недоступна." },
+    "/account/profile": { title: "Мои данные — MFT39", description: "Данные аккаунта MFT39." },
     "/booking": {
       title: import.meta.env.DEV ? "Демонстрационная запись — MFT39" : "Запись на тренировку — MFT39",
       description:

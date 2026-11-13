@@ -19,7 +19,9 @@ export async function logoutYandexSession(): Promise<void> {
   // remains inaccessible to JavaScript. Network failures never fake a logout.
   const { session, csrfToken } = await fetchYandexSession();
   if (!session || !csrfToken) return;
-  const response = await fetch("https://api.mft39.ru/api/logout/", {
+  // Cludex's directory URL rejects OPTIONS before PHP; the physical entrypoint
+  // reaches the same CSRF-protected route without changing cookie/CORS policy.
+  const response = await fetch("https://api.mft39.ru/api/logout/index.php", {
     method: "POST", credentials: "include", cache: "no-store", signal: AbortSignal.timeout(12000),
     headers: { "X-CSRF-Token": csrfToken },
   });

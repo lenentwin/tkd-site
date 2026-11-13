@@ -8,7 +8,7 @@ import {
 import { Link, useLocation } from "react-router-dom";
 import { useContent } from "../../app/providers/ContentProvider";
 import { useTheme } from "../../app/providers/ThemeProvider";
-import { useAuth } from "../../app/providers/AuthProvider";
+import AccountLink from "./AccountLink";
 import Icon from "./Icon";
 import { DisplayText, formatDisplayText } from "./DisplayText";
 
@@ -24,7 +24,6 @@ const navigation = [
 export default function SiteLayout({ children }: { children: ReactNode }) {
   const { content } = useContent();
   const { theme, toggleTheme } = useTheme();
-  const { session } = useAuth();
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -119,12 +118,7 @@ export default function SiteLayout({ children }: { children: ReactNode }) {
             >
               <Icon name={theme === "dark" ? "sun" : "moon"} />
             </button>
-            <Link
-              className="header-booking"
-              to={session ? "/booking" : "/login"}
-            >
-              Записаться <Icon name="arrow" />
-            </Link>
+            <AccountLink className="header-booking" />
             <button
               ref={toggleRef}
               className="icon-button mobile-menu-toggle"
@@ -158,13 +152,7 @@ export default function SiteLayout({ children }: { children: ReactNode }) {
                   <DisplayText text={label} />
                 </Link>
               ))}
-              <Link
-                className="button"
-                to={session ? "/booking" : "/login"}
-                onClick={closeMenu}
-              >
-                <DisplayText text={content.brand.bookingLabel} />
-              </Link>
+              <AccountLink onClick={closeMenu} />
             </nav>
           </div>
         ) : null}

@@ -14,14 +14,20 @@ import AchievementsPage from "../pages/AchievementsPage";
 import ContactsPage from "../pages/ContactsPage";
 import RutubePage from "../pages/RutubePage";
 import VkPage from "../pages/VkPage";
-import ServiceUnavailablePage from "../pages/ServiceUnavailablePage";
 import { useContent } from "./providers/ContentProvider";
-import { yandexAuthEnabled } from "../services/backend";
+import { useAuth } from "./providers/AuthProvider";
 
 const EditorPage = import.meta.env.DEV ? lazy(() => import("../editor/EditorPage")) : null;
-const LoginPage = import.meta.env.DEV || yandexAuthEnabled ? lazy(() => import("../pages/LoginPage")) : ServiceUnavailablePage;
-const AccountPage = import.meta.env.DEV || yandexAuthEnabled ? lazy(() => import("../pages/AccountPage")) : ServiceUnavailablePage;
-const BookingPage = import.meta.env.DEV ? lazy(() => import("../pages/BookingPage")) : ServiceUnavailablePage;
+const LoginPage = lazy(() => import("../pages/LoginPage"));
+const AccountPage = lazy(() => import("../pages/AccountPage"));
+
+function LegacyBookingRedirect() {
+  const { session, loading, unavailable, refresh } = useAuth();
+  const { search } = useLocation();
+  if (loading) return <main id="main" className="page-shell container"><h1>Личный кабинет</h1><p role="status">Проверяем сессию…</p></main>;
+  if (unavailable) return <main id="main" className="page-shell container"><h1>Не удалось проверить вход</h1><button className="button" onClick={() => void refresh()}>Повторить проверку</button></main>;
+  return <Navigate to={session ? `/account/book${search}` : "/login"} replace />;
+}
 
 class AppBoundary extends Component<
   { children: ReactNode },
@@ -55,7 +61,7 @@ function RouteEffects() {
   useEffect(() => {
     const meta = content.pages[pathname];
     const robots = document.querySelector<HTMLMetaElement>('meta[name="robots"]');
-    if (robots) robots.content = import.meta.env.DEV || ["/editor", "/login", "/account", "/booking"].includes(pathname) ? "noindex,nofollow" : "index,follow";
+    if (robots) robots.content = import.meta.env.DEV || ["/editor", "/login", "/booking"].includes(pathname) || pathname === "/account" || pathname.startsWith("/account/") ? "noindex,nofollow" : "index,follow";
     document.title =
       meta?.title ?? `Страница не найдена — ${content.brand.shortName}`;
     const description = document.querySelector<HTMLMetaElement>(
@@ -119,8 +125,8 @@ export default function App() {
             <Route path="/rutube" element={<RutubePage />} />
             <Route path="/vk" element={<VkPage />} />
             <Route path="/login" element={<LoginPage />} />
-            <Route path="/account" element={<AccountPage />} />
-            <Route path="/booking" element={<BookingPage />} />
+            <Route path="/account/*" element={<AccountPage />} />
+            <Route path="/booking" element={<LegacyBookingRedirect />} />
             <Route
               path="/gallery"
               element={<Navigate to="/#gallery" replace />}

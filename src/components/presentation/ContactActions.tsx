@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useContent } from "../../app/providers/ContentProvider";
-import { useAuth } from "../../app/providers/AuthProvider";
+import AccountLink from "./AccountLink";
 import { useMediaQuery } from "../../animations/useMotionPreference";
 import { copyPhone, getGmailLink } from "../../services/integrations";
 import Icon from "./Icon";
@@ -13,7 +13,6 @@ export default function ContactActions({
   compact?: boolean;
 }) {
   const { content } = useContent();
-  const { session } = useAuth();
   const mobile = useMediaQuery("(max-width: 767px)");
   const [message, setMessage] = useState("");
   useEffect(() => {
@@ -73,10 +72,7 @@ export default function ContactActions({
         </a>
       </div>
       <div className="contact-cta">
-        <Link className="button" to={session ? "/booking" : "/login"}>
-          <DisplayText text={content.brand.bookingLabel} />
-          <Icon name="arrow" />
-        </Link>
+        <AccountLink />
         <Link className="text-link" to="/contacts#map">
           Адреса и маршруты
           <Icon name="pin" />

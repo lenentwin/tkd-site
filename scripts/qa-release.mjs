@@ -8,9 +8,11 @@ const js = (await Promise.all(artifacts.filter(name => name.endsWith(".js")).map
 for (const forbidden of ["Тестовый Участник", "Тестовый Ребёнок", "Демо-участник", "Демонстрационный вход", "Место для будущих фотографий", "mft39.demo", "Демонстрация интерфейса"]) {
   assert(!js.includes(forbidden), `Production contains development marker: ${forbidden}`);
 }
-assert(!artifacts.some(name => /EditorPage|LoginPage|AccountPage|BookingPage/.test(name)));
+assert(!artifacts.some(name => /EditorPage/.test(name)));
 assert((await readFile("dist/_redirects", "utf8")).includes("native SPA fallback"));
-assert(!(await readdir("dist")).includes("404.html"));
+if ((await readdir("dist")).includes("404.html")) {
+  assert.equal(await readFile("dist/404.html", "utf8"), await readFile("dist/index.html", "utf8"));
+}
 const headersFile = await readFile("dist/_headers", "utf8");
 const csp = headersFile.split("\n").find(line => line.trim().startsWith("Content-Security-Policy:")).split("Content-Security-Policy: ")[1].trim();
 const browser = await chromium.launch({ executablePath: "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe", headless: true });
@@ -22,17 +24,22 @@ try {
     const page = await context.newPage();
     page.on("pageerror", e => errors.push(String(e)));
     page.on("request", request => { if (request.method() === "POST") posts.push(request.url()); });
+    await page.route("https://api.mft39.ru/**", route => route.fulfill({
+      status: 401, contentType: "application/json", body: '{"authenticated":false}',
+      headers: { "Access-Control-Allow-Origin": "http://127.0.0.1:4183", "Access-Control-Allow-Credentials": "true" },
+    }));
     // Exercise the exact intended CSP in a browser; Vite preview does not serve _headers.
     await page.route("http://127.0.0.1:4183/**", async route => {
       const response = await route.fetch();
       await route.fulfill({ response, headers: { ...response.headers(), "content-security-policy": csp } });
     });
-    for (const route of ["/", "/coach", "/achievements", "/contacts", "/rutube", "/vk", "/login", "/account", "/booking", "/editor"]) {
+    for (const route of ["/", "/coach", "/achievements", "/contacts", "/rutube", "/vk", "/login", "/account", "/account/bookings", "/account/book", "/account/profile", "/booking", "/editor"]) {
       await page.goto(`http://127.0.0.1:4183${route}`, { waitUntil: "domcontentloaded" });
       await page.locator("h1").first().waitFor();
       assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), `Overflow ${width} ${route}`);
-      if (["/login", "/account", "/booking"].includes(route)) {
-        assert.equal(await page.locator('[data-backend-status="not-connected"]').count(), 1);
+      if (route === "/login" || route.startsWith("/account") || route === "/booking") {
+        await page.waitForURL("**/login");
+        assert.equal(await page.getByRole("button", { name: "Войти через Яндекс", exact: true }).count(), 1);
         assert.equal(await page.locator("form,input").count(), 0);
       }
       if (route === "/editor") assert.match(await page.locator("h1").innerText(), /не найдена/);

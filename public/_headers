@@ -11,5 +11,7 @@
   X-Robots-Tag: noindex, nofollow
 /account
   X-Robots-Tag: noindex, nofollow
+/account/*
+  X-Robots-Tag: noindex, nofollow
 /booking
   X-Robots-Tag: noindex, nofollow

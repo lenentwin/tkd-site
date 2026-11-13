@@ -24,6 +24,7 @@ describe("Yandex server auth adapter", () => {
     const request = vi.fn().mockResolvedValueOnce(new Response(JSON.stringify(profile))).mockResolvedValueOnce(new Response("{}", { status: 503 }));
     vi.stubGlobal("fetch", request);
     await expect(logoutYandexSession()).rejects.toThrow();
+    expect(request.mock.calls[1][0]).toBe("https://api.mft39.ru/api/logout/index.php");
     expect(request.mock.calls[1][1]).toMatchObject({ method: "POST", credentials: "include", headers: { "X-CSRF-Token": csrf } });
   });
 });

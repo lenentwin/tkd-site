@@ -5,7 +5,7 @@ const labels: Record<string, string> = {
   fullName: "Полное название",
   motto: "Девиз",
   description: "Описание",
-  bookingLabel: "Текст кнопки записи",
+  bookingLabel: "Текст кнопки входа в кабинет",
   ageGroups: "Возрастные группы — по одной строке",
   title: "Заголовок",
   intro: "Вводный текст",
