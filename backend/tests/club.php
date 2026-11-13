@@ -5,7 +5,8 @@ use Mft39\{Request,ApiError};
 use Mft39\Club\{Rules,Controller,Repository};
 use function Mft39\Tests\{config,check};
 use function Mft39\{randomToken,tokenHash};
-foreach(explode(';',file_get_contents(dirname(__DIR__).'/migrations/002_club.sql')) as $sql){if(trim($sql)!==''){$pdo->exec($sql);}}
+$migration=preg_replace('/^\s*--[^\n]*$/m','',file_get_contents(dirname(__DIR__).'/migrations/002_club.sql'));
+foreach(explode(';',$migration) as $sql){if(trim($sql)!==''){$pdo->exec($sql);}}
 $now=strtotime('2026-11-15T12:00:00Z');$controller=new Controller(config(),$store);$repo=new Repository($pdo);$cases=0;
 function pass(string $name):void{global $cases;$cases++;echo 'PASS '.$name."\n";}
 function actor(string $yandex,string $role):array{
@@ -49,7 +50,8 @@ $stored=$pdo->query("SELECT * FROM club_payments WHERE student_id='$student'")->
 check(call($trainer,'POST','payment',array_replace($payment,['status'=>'unpaid']))->status===409);pass('payment confirmation actor/time and stale update rejection');
 $newMonth=strtotime('2026-11-30T22:00:00Z');$dec=$repo->students($trainer,$newMonth)['items'][0];check($dec['payment']['month']==='2026-12'&&$dec['payment']['status']==='unpaid'&&$dec['payment']['version']===0);
 check($pdo->query("SELECT status FROM club_payments WHERE student_id='$student' AND month='2026-11-01'")->fetchColumn()==='paid');
-check(call($trainer,'POST','payment',$payment,time:$newMonth)->body['error']==='month_changed');
+$lateActor=$trainer;$lateActor['sid']=randomToken();$store->putSession(tokenHash($lateActor['sid']),['user_id'=>$trainer['id'],'csrf_token'=>$trainer['csrf'],'created_at'=>$newMonth,'last_seen_at'=>$newMonth,'expires_at'=>$newMonth+3600],null);
+check(call($lateActor,'POST','payment',$payment,time:$newMonth)->body['error']==='month_changed');
 check(Rules::month(strtotime('2026-12-31T21:59:59Z'))==='2026-12'&&Rules::month(strtotime('2026-12-31T22:00:00Z'))==='2027-01');pass('Kaliningrad midnight, year rollover and immutable previous month without cron');
 $correction=array_replace($payment,['status'=>'unpaid','expectedVersion'=>1]);check(call($trainer,'POST','payment',$correction)->status===422);
 check(call($trainer,'POST','payment',array_replace($correction,['reason'=>'Исправление тестовой отметки']))->status===200);

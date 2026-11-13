@@ -7,6 +7,12 @@ final class Rules
 {
     public static function month(int $now): string { return (new \DateTimeImmutable('@'.$now))->setTimezone(new \DateTimeZone('Europe/Kaliningrad'))->format('Y-m'); }
     public static function utc(int $now): string { return gmdate('Y-m-d H:i:s',$now); }
+    public static function iso(string $utc): string { return str_replace(' ','T',$utc).'Z'; }
+    public static function day(int $now): string { return (new \DateTimeImmutable('@'.$now))->setTimezone(new \DateTimeZone('Europe/Kaliningrad'))->format('Y-m-d'); }
+    public static function paragraph(mixed $value): string {
+        if(!is_string($value)||!preg_match('//u',$value)||preg_match('/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/u',$value)||preg_match_all('/./us',$value)>1000){throw new ApiError(422,'invalid_comment');}
+        return trim(str_replace(["\r\n","\r"],"\n",$value));
+    }
     public static function uuid(): string { $b=random_bytes(16);$b[6]=chr((ord($b[6])&15)|64);$b[8]=chr((ord($b[8])&63)|128);$h=bin2hex($b);return substr($h,0,8).'-'.substr($h,8,4).'-'.substr($h,12,4).'-'.substr($h,16,4).'-'.substr($h,20); }
     public static function text(mixed $value,int $max,bool $required=true): string {
         if(!is_string($value)||!preg_match('//u',$value)||preg_match('/[\x00-\x1f\x7f]/u',$value)||preg_match_all('/./us',$value)>$max){throw new ApiError(422,'invalid_fields');}
@@ -33,6 +39,6 @@ final class Rules
             $phone=self::text($g['phone']??null,24);if(!preg_match('/^[+0-9 ()-]+$/D',$phone)||!preg_match('/^[0-9]{10,15}$/D',preg_replace('/\D/','',$phone))){throw new ApiError(422,'invalid_phone');}
             $guardian=['lastName'=>self::name($g['lastName']??null),'firstName'=>self::name($g['firstName']??null),'middleName'=>self::name($g['middleName']??'',false),'phone'=>$phone,'relationship'=>self::choice($g['relationship']??null,['parent','guardian'])];
         }
-        return ['students'=>$students,'locationId'=>$hall,'requestedDate'=>$date,'guardian'=>$guardian,'comment'=>self::text($v['comment']??'',1000,false)];
+        return ['students'=>$students,'locationId'=>$hall,'requestedDate'=>$date,'guardian'=>$guardian,'comment'=>self::paragraph($v['comment']??'')];
     }
 }

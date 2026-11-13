@@ -47,7 +47,7 @@ final class Repository
     private function studentDto(array $r,string $month): array {
         return ['id'=>$r['id'],'locationId'=>$r['hall_id'],'lastName'=>$r['last_name'],'firstName'=>$r['first_name'],'middleName'=>$r['middle_name'],
             'age'=>(int)$r['age'],'ageRecordedOn'=>$r['age_recorded_on'],'status'=>$r['learning_status'],'admitted'=>$r['admitted_at']!==null,
-            'createdAt'=>$r['created_at'].'Z','version'=>(int)$r['version'],'payment'=>['month'=>$month,'status'=>$r['payment_status']??'unpaid','version'=>(int)($r['payment_version']??0)]];
+            'createdAt'=>Rules::iso($r['created_at']),'version'=>(int)$r['version'],'payment'=>['month'=>$month,'status'=>$r['payment_status']??'unpaid','version'=>(int)($r['payment_version']??0)]];
     }
     public function students(array $actor,int $now,string $cursor='',string $filter='active'): array {
         [$scope,$args]=$this->scope($actor);$where=$scope;
@@ -80,14 +80,15 @@ final class Repository
                     $student=$this->q('SELECT s.* FROM club_students s JOIN club_student_guardians g ON g.student_id=s.id WHERE g.user_id=? AND s.last_name=? AND s.first_name=? AND s.middle_name=? AND s.age=? ORDER BY s.id LIMIT 1 FOR UPDATE',[$actor['id'],$s['lastName'],$s['firstName'],$s['middleName'],$s['age']])->fetch();
                 }
                 if(!$student){
-                    $id=Rules::uuid();$this->q("INSERT INTO club_students(id,hall_id,last_name,first_name,middle_name,age,age_recorded_on,learning_status,created_at,updated_at) VALUES(?,?,?,?,?,?,?,'trial',?,?)",[$id,$input['locationId'],$s['lastName'],$s['firstName'],$s['middleName'],$s['age'],substr(Rules::utc($now),0,10),Rules::utc($now),Rules::utc($now)]);
+                    $id=Rules::uuid();$this->q("INSERT INTO club_students(id,hall_id,last_name,first_name,middle_name,age,age_recorded_on,learning_status,created_at,updated_at) VALUES(?,?,?,?,?,?,?,'trial',?,?)",[$id,$input['locationId'],$s['lastName'],$s['firstName'],$s['middleName'],$s['age'],Rules::day($now),Rules::utc($now),Rules::utc($now)]);
                     $this->q('INSERT INTO club_student_guardians(student_id,user_id,relationship,created_at) VALUES(?,?,?,?)',[$id,$actor['id'],$s['age']<18?$input['guardian']['relationship']:'self',Rules::utc($now)]);
                     $this->audit($actor,$id,$input['locationId'],'student.created',$id,['status'=>'trial'], $now);
                     $student=['id'=>$id,'hall_id'=>$input['locationId']];
                 }
                 if($student['hall_id']!==$input['locationId']){throw new ApiError(409,'hall_change_requires_trainer');}
+                if(($student['learning_status']??null)==='inactive'){throw new ApiError(409,'reactivation_requires_trainer');}
                 if($this->q('SELECT id FROM club_applications WHERE student_id=? AND hall_id=? AND requested_date=?',[$student['id'],$input['locationId'],$input['requestedDate']])->fetch()){throw new ApiError(409,'duplicate_application');}
-                $id=Rules::uuid();$this->q('INSERT INTO club_applications(id,batch_id,student_id,applicant_id,hall_id,requested_date,comment,representative_json,created_at) VALUES(?,?,?,?,?,?,?,?,?)',[$id,$batch,$student['id'],$actor['id'],$input['locationId'],$input['requestedDate'],$input['comment'],$input['guardian']?json_encode($input['guardian'],JSON_THROW_ON_ERROR):null,Rules::utc($now)]);
+                $id=Rules::uuid();$this->q('INSERT INTO club_applications(id,batch_id,student_id,applicant_id,hall_id,requested_date,comment,representative_json,created_at) VALUES(?,?,?,?,?,?,?,?,?)',[$id,$batch,$student['id'],$actor['id'],$input['locationId'],$input['requestedDate'],$input['comment'],$s['age']<18?json_encode($input['guardian'],JSON_THROW_ON_ERROR):null,Rules::utc($now)]);
                 $ids[]=$id;$this->audit($actor,$student['id'],$input['locationId'],'application.created',$id,['status'=>'pending'], $now);
             }
             return ['batchId'=>$batch,'applicationIds'=>$ids,'replayed'=>false];
@@ -112,10 +113,17 @@ final class Repository
         });
     }
     public function payments(array $actor,string $id,int $now,string $before=''): array {
-        $this->student($actor,$id);$args=[$id];$where='';if($before!==''){$where=' AND month<?';$args[]=$before.'-01';}
-        $rows=$this->q('SELECT * FROM club_payments WHERE student_id=?'.$where.' ORDER BY month DESC LIMIT 101',$args)->fetchAll();$more=count($rows)>100;if($more){array_pop($rows);}
-        $items=array_map(fn($r)=>['month'=>substr($r['month'],0,7),'status'=>$r['status'],'version'=>(int)$r['version'],'confirmedBy'=>$r['confirmed_by']===null?null:(int)$r['confirmed_by'],'confirmedAt'=>$r['confirmed_at']===null?null:$r['confirmed_at'].'Z','updatedBy'=>(int)$r['updated_by'],'updatedAt'=>$r['updated_at'].'Z'],$rows);
-        return ['items'=>$items,'currentMonth'=>Rules::month($now),'nextCursor'=>$more?substr(end($rows)['month'],0,7):null];
+        $student=$this->student($actor,$id);$zone=new \DateTimeZone('Europe/Kaliningrad');
+        $month=new \DateTimeImmutable(($before!==''?$before:Rules::month($now)).'-01',$zone);if($before!==''){$month=$month->modify('-1 month');}
+        $first=(new \DateTimeImmutable($student['created_at'],new \DateTimeZone('UTC')))->setTimezone($zone)->format('Y-m');
+        $rows=$this->q('SELECT * FROM club_payments WHERE student_id=? AND month BETWEEN ? AND ? ORDER BY month DESC',[$id,$month->modify('-99 months')->format('Y-m-d'),$month->format('Y-m-d')])->fetchAll();
+        $map=[];foreach($rows as $row){$map[substr($row['month'],0,7)]=$row;}$items=[];
+        for($i=0;$i<100&&$month->format('Y-m')>=$first;$i++,$month=$month->modify('-1 month')){
+            $m=$month->format('Y-m');$r=$map[$m]??null;$items[]=['month'=>$m,'status'=>$r['status']??'unpaid','version'=>(int)($r['version']??0),
+                'confirmedBy'=>isset($r['confirmed_by'])?(int)$r['confirmed_by']:null,'confirmedAt'=>isset($r['confirmed_at'])?Rules::iso($r['confirmed_at']):null,
+                'updatedBy'=>isset($r['updated_by'])?(int)$r['updated_by']:null,'updatedAt'=>isset($r['updated_at'])?Rules::iso($r['updated_at']):null];
+        }
+        return ['items'=>$items,'currentMonth'=>Rules::month($now),'nextCursor'=>$month->format('Y-m')>=$first?end($items)['month']:null];
     }
     public function payment(array $actor,string $id,string $month,string $status,int $version,string $reason,string $expectedMonth,int $now): array {
         if($expectedMonth!==Rules::month($now)){throw new ApiError(409,'month_changed');}

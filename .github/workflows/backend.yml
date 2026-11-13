@@ -38,6 +38,8 @@ jobs:
         run: find backend -name '*.php' -print0 | xargs -0 -n1 php8.3 -l
       - name: OAuth and security tests (fictional data only)
         run: php8.3 backend/tests/run.php
+      - name: Club validation and calendar boundaries
+        run: php8.3 backend/tests/club-rules.php
       - name: MySQL, concurrency and HTTP integration
         run: php8.3 backend/tests/mysql.php
       - name: Club enrollment, scopes, monthly accounting and concurrency
