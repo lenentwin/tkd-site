@@ -35,6 +35,7 @@ const errors: Record<string, string> = {
   reactivation_requires_trainer: "Ученик неактивен. Сначала свяжитесь с тренером для возобновления занятий.",
   student_changed: "Данные ученика отличаются от серверной записи. Обновите список учеников.",
   device_limit: "Достигнут лимит активных доступов. Отзовите ненужный доступ.",
+  rate_limited: "Слишком много запросов. Подождите несколько минут и повторите попытку.",
 };
 export class ClubError extends Error {
   constructor(public readonly status: number, public readonly code: string) { super(errors[code] ?? (status === 401 ? "Сессия завершилась. Войдите снова." : status === 422 ? "Проверьте заполнение полей." : "Сервис учёта временно недоступен. Повторите попытку позже.")); }
@@ -64,15 +65,15 @@ export type ClubStudent = z.infer<typeof studentSchema>;
 export type ClubApplication = z.infer<typeof applicationSchema>;
 export const clubApi = {
   bootstrap: () => request("bootstrap", bootstrapSchema),
-  students: (status = "active", cursor = "") => request("students", pageOf(studentSchema), { status, cursor }),
+  students: (status = "active", cursor = "", own = false) => request("students", pageOf(studentSchema), { status, cursor, view: own ? "own" : "staff" }),
   student: (studentId: string) => request("student", studentSchema, { studentId }),
-  applications: (cursor = "", status = "all") => request("applications", pageOf(applicationSchema), { cursor, status }),
+  applications: (cursor = "", status = "all", own = false) => request("applications", pageOf(applicationSchema), { cursor, status, view: own ? "own" : "staff" }),
   enroll: (body: TrainingBookingRequest, key: string) => request("applications", z.object({ batchId: z.uuid(), applicationIds: z.array(z.uuid()).min(1), replayed: z.boolean() }), {}, body, key),
   decide: (id: string, status: "accepted" | "rejected", expectedVersion: number) => request("application-decision", z.object({ id: z.uuid(), status: z.enum(["accepted", "rejected"]), version: z.number() }), {}, { id, status, expectedVersion }),
   status: (studentId: string, status: ClubStudent["status"], expectedVersion: number, reason: string) => request("student-status", z.object({ id: z.uuid(), status: z.enum(["trial", "permanent", "inactive"]), version: z.number() }), {}, { studentId, status, expectedVersion, reason }),
-  payments: (studentId: string, cursor = "") => request("payments", historySchema, { studentId, cursor }),
+  payments: (studentId: string, cursor = "", own = false) => request("payments", historySchema, { studentId, cursor, view: own ? "own" : "staff" }),
   payment: (studentId: string, month: string, status: "paid" | "unpaid", expectedVersion: number, expectedCurrentMonth: string, reason: string) => request("payment", z.object({ studentId: z.uuid(), month: monthSchema, status: z.enum(["paid", "unpaid"]), version: z.number() }), {}, { studentId, month, status, expectedVersion, expectedCurrentMonth, reason }),
-  audit: (studentId: string, after = 0) => request("changes", auditSchema, { studentId, after: String(after) }),
+  audit: (studentId: string, after = 0, own = false) => request("changes", auditSchema, { studentId, after: String(after), view: own ? "own" : "staff" }),
   devices: () => request("devices", devicesSchema),
   createDevice: (label: string) => request("device-create", z.object({ id: z.uuid(), token: z.string(), expiresAt: z.number() }), {}, { label }),
   revokeDevice: (id: string) => request("device-revoke", z.object({ id: z.uuid(), revoked: z.boolean() }), {}, { id }),

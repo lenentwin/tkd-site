@@ -95,6 +95,8 @@
 .cabinet :is(input,select,textarea):focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 .cabinet textarea { resize: vertical; }
 .club-list { display: grid; gap: 18px; margin: 24px 0 36px; }
+.cabinet-content>h2 { margin-top: 36px; }
+.cabinet-content>p+.cabinet-section-heading { margin-top: 32px; }
 .club-list>article { min-width: 0; padding: clamp(20px,3vw,30px); border: 1px solid var(--line); border-top: 2px solid var(--accent); background: var(--surface); overflow-wrap: anywhere; }
 .club-list h3 { font-size: clamp(26px,3vw,36px); line-height: 1.1; margin-bottom: 14px; }
 .club-list p { margin: 10px 0; color: var(--muted); font-size: 14px; }

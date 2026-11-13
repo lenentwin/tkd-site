@@ -44,6 +44,7 @@ try {
       if (offline) return route.abort();
       const headers = { "Access-Control-Allow-Origin": base, "Access-Control-Allow-Credentials": "true" };
       if (request.method() === "OPTIONS") return route.fulfill({ status: 204, headers: { ...headers, "Access-Control-Allow-Methods": "POST", "Access-Control-Allow-Headers": "X-CSRF-Token" } });
+      if (path.includes("/club")) return route.fulfill({ status: 404, contentType: "application/json", headers, body: '{"error":"not_found"}' });
       if (path.includes("start")) return route.fulfill({ contentType: "text/html", body: "<h1>OAuth navigation fixture</h1>" });
       if (path.includes("logout")) {
         assert.equal(path, "/api/logout/index.php"); assert.equal(request.headers()["x-csrf-token"], "x".repeat(43));

@@ -70,6 +70,12 @@ $row=$repo->students($trainer,$now)['items'][0];check(call($trainer,'POST','stud
 check($repo->students($trainer,$now)['items']===[]&&count($repo->students($trainer,$now,'','all')['items'])===1);
 check((int)$pdo->query("SELECT COUNT(*) FROM club_payments WHERE student_id='$student'")->fetchColumn()===2);pass('deactivation preserves students, applications, audit and monthly history');
 check(count(call($head,'GET','bootstrap')->body['halls'])===3&&count(call($admin,'GET','bootstrap')->body['halls'])===3&&count(call($trainer,'GET','bootstrap')->body['halls'])===1);pass('head/admin all halls and trainer assignments');
+check(call($trainer,'GET','students',query:['view'=>'own','status'=>'all'])->body['items']===[]);
+check(call($trainer,'GET','applications',query:['view'=>'own'])->body['items']===[]);
+check(call($trainer,'GET','student',query:['view'=>'own','studentId'=>$student])->status===404);
+check(call($parent,'GET','student',query:['view'=>'own','studentId'=>$student])->body['id']===$student);
+check(call($outside,'GET','student',query:['studentId'=>$student])->status===404);
+pass('personal guardian view never includes other families even for staff');
 $device=call($trainer,'POST','device-create',['label'=>'Synthetic Android']);check($device->status===200);$token=$device->body['token'];$deviceId=$device->body['id'];
 $native=function(?int $time=null)use($controller,$token,$now){return $controller->handle(new Request('GET','/api/club',['resource'=>'bootstrap'],['authorization'=>'Bearer '.$token]),'', $time??$now);};
 check($native()->status===200);check($native($now+28800)->status===401);
@@ -78,6 +84,33 @@ $pdo->prepare("UPDATE users SET role='user' WHERE id=?")->execute([$trainer['id'
 check(call($trainer,'POST','device-revoke',['id'=>$deviceId])->status===200&&$native()->status===401);
 check(!str_contains(json_encode($pdo->query('SELECT * FROM club_device_tokens')->fetchAll()),$token));
 check(!str_contains(json_encode($pdo->query('SELECT details_json FROM club_audit')->fetchAll()),$token));pass('per-device hashed expiring tokens, live role checks, revocation, no shared APK secret');
+$family=actor('990000080','user');$familyInput=$input;
+$familyInput['students']=[['lastName'=>'Семейный','firstName'=>'Первый','age'=>9],['lastName'=>'Семейный','firstName'=>'Второй','age'=>12],['lastName'=>'Семейный','firstName'=>'Взрослый','age'=>25]];
+$created=call($family,'POST','applications',$familyInput,headers:['idempotency-key'=>'family-three-students']);check($created->status===200&&count($created->body['applicationIds'])===3);
+check(count(call($family,'GET','students',query:['status'=>'all'])->body['items'])===3);
+check((int)$repo->q("SELECT COUNT(*) FROM club_student_guardians WHERE user_id=? AND relationship='self'",[$family['id']])->fetchColumn()===1);
+$before=(int)$pdo->query('SELECT COUNT(*) FROM club_students')->fetchColumn();$bad=$familyInput;
+$bad['students']=[['lastName'=>'Откат','firstName'=>'Проверка','age'=>25],['id'=>$student,'lastName'=>'Чужой','firstName'=>'Запрещён','age'=>25]];
+check(call($family,'POST','applications',$bad,headers:['idempotency-key'=>'family-rollback-test'])->status===404);
+check((int)$pdo->query('SELECT COUNT(*) FROM club_students')->fetchColumn()===$before);pass('multiple children/adult guardian links and atomic rollback of a foreign student ID');
+$own=$familyInput;$own['locationId']='city';$own['students']=[['lastName'=>'Тренерский','firstName'=>'Ребёнок','age'=>11]];
+check(call($trainer,'POST','applications',$own,headers:['idempotency-key'=>'trainer-own-child-key'])->status===200);
+$ownStudents=call($trainer,'GET','students',query:['view'=>'own','status'=>'all'])->body['items'];check(count($ownStudents)===1&&$ownStudents[0]['locationId']==='city');
+check(call($trainer,'GET','payments',query:['view'=>'own','studentId'=>$ownStudents[0]['id']])->status===200);
+check(call($trainer,'GET','payments',query:['studentId'=>$ownStudents[0]['id']])->status===404);pass('trainer as a guardian keeps personal children separate from hall authority');
+$paged=actor('990000081','user');$alphabet=preg_split('//u','АБВГДЕЖЗИКЛМНОПРСТУФХЦЧШЩЫЭЮЯ',-1,PREG_SPLIT_NO_EMPTY);
+for($batch=0;$batch<6;$batch++){
+    $pageInput=$familyInput;$pageInput['students']=[];
+    for($n=0;$n<20;$n++){$pageInput['students'][]=['lastName'=>'Страница'.$alphabet[$batch],'firstName'=>'Пример'.$alphabet[$n],'middleName'=>'','age'=>25];}
+    $repo->enroll($paged,Rules::input($pageInput,$now),'synthetic-page-batch-'.$batch,$now);
+}
+$page1=$repo->students($paged,$now,'','all');$page2=$repo->students($paged,$now,$page1['nextCursor'],'all');
+check(count($page1['items'])===100&&count($page2['items'])===20&&$page2['nextCursor']===null);
+check(count(array_unique(array_merge(array_column($page1['items'],'id'),array_column($page2['items'],'id'))))===120);
+$apps1=$repo->applications($paged,'','pending');$apps2=$repo->applications($paged,$apps1['nextCursor'],'pending');check(count($apps1['items'])===100&&count($apps2['items'])===20);
+$audit1=$repo->changes($paged,0);$audit2=$repo->changes($paged,$audit1['cursor']);check(count($audit1['items'])===100&&count($audit2['items'])===100&&$audit2['hasMore']);
+pass('120 real MySQL students/applications and scoped audit paginate without duplicates');
+
 // Actual public entrypoint over HTTP with real MySQL and fictional data only.
 $now=time();$httpParent=actor('990000090','user');
 $socket=stream_socket_server('tcp://127.0.0.1:0',$errno,$error);$address=stream_socket_get_name($socket,false);fclose($socket);

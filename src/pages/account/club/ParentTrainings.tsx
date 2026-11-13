@@ -10,10 +10,10 @@ export function PaymentLabel({ student }: { student: ClubStudent }) {
   const { month } = useClub(); const status = currentPayment(student.payment, month);
   return <span className={`club-badge is-${status}`}>{month}: {status === "paid" ? "Оплачено" : status === "unpaid" ? "Не оплачено" : "Нужно обновить"}</span>;
 }
-export function HistoryView({ studentId }: { studentId: string }) {
+export function HistoryView({ studentId, own = false }: { studentId: string; own?: boolean }) {
   const { month, data, error } = useClub(); const enabled = !!data && !error;
-  const loadPayments = useCallback((cursor: string) => clubApi.payments(studentId, cursor), [studentId]);
-  const loadAudit = useCallback(async (cursor: string) => { const value = await clubApi.audit(studentId, Number(cursor)); return { items: value.items, nextCursor: value.hasMore ? String(value.cursor) : null }; }, [studentId]);
+  const loadPayments = useCallback((cursor: string) => clubApi.payments(studentId, cursor, own), [studentId, own]);
+  const loadAudit = useCallback(async (cursor: string) => { const value = await clubApi.audit(studentId, Number(cursor), own); return { items: value.items, nextCursor: value.hasMore ? String(value.cursor) : null }; }, [studentId, own]);
   const payments = usePaged(loadPayments, enabled, `${studentId}:${month}`); const audit = usePaged(loadAudit, enabled, `${studentId}:${month}`);
   return <section className="club-history"><h3>История оплат</h3>
     {(payments.error || audit.error) && <p role="alert" className="cabinet-error">{payments.error || audit.error}<button className="text-link" onClick={() => { void payments.reload(); void audit.reload(); }}>Повторить загрузку</button></p>}
@@ -26,15 +26,15 @@ export function HistoryView({ studentId }: { studentId: string }) {
 }
 export default function ParentTrainings() {
   const club = useClub(); const [selected, setSelected] = useState<string | null>(null);
-  const loadStudents = useCallback((cursor: string) => clubApi.students("all", cursor), []); const loadApplications = useCallback((cursor: string) => clubApi.applications(cursor), []);
-  const enabled = !!club.data && !club.error; const refreshKey = `${club.month}:${club.data?.scopeVersion}`;
+  const loadStudents = useCallback((cursor: string) => clubApi.students("all", cursor, true), []); const loadApplications = useCallback((cursor: string) => clubApi.applications(cursor, "all", true), []);
+  const enabled = !!club.data && !club.error; const refreshKey = `${club.month}:${club.data?.scopeVersion}:${club.data?.serverTime}`;
   const students = usePaged(loadStudents, enabled, refreshKey); const applications = usePaged(loadApplications, enabled, refreshKey);
   return <><p className="eyebrow">Личный кабинет</p><h1>Мои тренировки</h1><ClubConnection />
     {(students.error || applications.error) && <p role="alert" className="cabinet-error">{students.error || applications.error}<button className="text-link" onClick={() => { void students.reload(); void applications.reload(); }}>Повторить</button></p>}
     {(students.busy || applications.busy) && <p role="status">Загружаем заявки и учеников…</p>}
     {applications.data && <><h2>Мои заявки</h2>{applications.data.items.length === 0 ? <p>Вы ещё не подавали заявок.</p> : <div className="club-list">{applications.data.items.map(application => <article key={application.id}><h3>{fullName(application)}</h3><p>{club.data?.halls.find(hall => hall.id === application.locationId)?.name}</p><p>Желаемая дата: {application.requestedDate}</p><span className="club-badge">{applicationLabels[application.status]}</span></article>)}</div>}
     {applications.data.nextCursor && <button className="text-link" disabled={applications.busy} onClick={() => void applications.more()}>Показать ещё заявки</button>}</>}
-    {students.data && <><h2>Ученики</h2>{students.data.items.length === 0 && <p>Ученики появятся после подачи заявки.</p>}<div className="club-list">{students.data.items.map(student => <article key={student.id}><h3>{fullName(student)}</h3><p>Возраст при добавлении: {student.age} · {learningLabels[student.status]}{!student.admitted ? " · ещё не зачислен" : ""}</p><PaymentLabel student={student} /><button className="text-link" onClick={() => setSelected(value => value === student.id ? null : student.id)}>История оплат и статусов</button>{selected === student.id && <HistoryView key={student.id} studentId={student.id} />}</article>)}</div>
+    {students.data && <><h2>Ученики</h2>{students.data.items.length === 0 && <p>Ученики появятся после подачи заявки.</p>}<div className="club-list">{students.data.items.map(student => <article key={student.id}><h3>{fullName(student)}</h3><p>Возраст при добавлении: {student.age} · {learningLabels[student.status]}{!student.admitted ? " · ещё не зачислен" : ""}</p><PaymentLabel student={student} /><button className="text-link" onClick={() => setSelected(value => value === student.id ? null : student.id)}>История оплат и статусов</button>{selected === student.id && <HistoryView key={student.id} studentId={student.id} own />}</article>)}</div>
     {students.data.nextCursor && <button className="text-link" disabled={students.busy} onClick={() => void students.more()}>Показать ещё учеников</button>}</>}
   </>;
 }

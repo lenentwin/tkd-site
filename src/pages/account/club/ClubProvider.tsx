@@ -15,10 +15,10 @@ export function ClubProvider({ children }: { children: ReactNode }) {
   const identity = session?.mode === "server" ? `${session.id}:${session.role}` : "demo";
   const [data, setData] = useState<ClubBootstrap | null>(null); const [loading, setLoading] = useState(true); const [error, setError] = useState("");
   const [month, setMonth] = useState(() => kaliningradMonth(Date.now()));
-  const clock = useRef({ server: Date.now(), received: performance.now() }); const request = useRef(0); const requestedMonth = useRef("");
+  const clock = useRef({ server: Date.now(), received: performance.now(), wall: Date.now() }); const request = useRef(0); const requestedMonth = useRef("");
   const reload = useCallback(async () => {
     const id = ++request.current;
-    try { const value = await clubApi.bootstrap(); if (id !== request.current) return; clock.current = { server: Date.parse(value.serverTime), received: performance.now() }; setData(value); setMonth(value.currentMonth); setError(""); }
+    try { const value = await clubApi.bootstrap(); if (id !== request.current) return; clock.current = { server: Date.parse(value.serverTime), received: performance.now(), wall: Date.now() }; setData(value); setMonth(value.currentMonth); setError(""); }
     catch (error) { if (id === request.current) setError(error instanceof Error ? error.message : "Сервис учёта недоступен."); }
     finally { if (id === request.current) setLoading(false); }
   }, []);
@@ -31,7 +31,10 @@ export function ClubProvider({ children }: { children: ReactNode }) {
   }, [reload]);
   useEffect(() => {
     const update = () => {
-      const current = kaliningradMonth(clock.current.server + performance.now() - clock.current.received); setMonth(current);
+      // Some platforms suspend performance.now() during system sleep. A wall
+      // clock advancing farther can invalidate old paid, never preserve it.
+      const elapsed = Math.max(performance.now() - clock.current.received, Date.now() - clock.current.wall, 0);
+      const current = kaliningradMonth(clock.current.server + elapsed); setMonth(current);
       if (data && current !== data.currentMonth && requestedMonth.current !== current) { requestedMonth.current = current; void reload(); }
     };
     const timer = window.setInterval(update, 1000); window.addEventListener("focus", update);

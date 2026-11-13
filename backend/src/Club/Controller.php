@@ -27,14 +27,18 @@ final class Controller
             if(!$this->store->allow($bucket,$now,600)){throw new ApiError(429,'rate_limited');}
             $resource=$request->query['resource']??'bootstrap';if(!is_string($resource)){throw new ApiError(422,'invalid_resource');}
             if($request->method==='GET'){
+                // A staff member can also be a guardian. Personal view only
+                // reduces authority and never grants access to another family.
+                $readActor=$actor;
+                if(($request->query['view']??null)==='own'){$readActor['role']='user';}
                 $cursor=$request->query['cursor']??'';if(!is_string($cursor)){throw new ApiError(422,'invalid_cursor');}
                 $payload=match($resource){
                     'bootstrap'=>$this->repo->bootstrap($actor,$now),
-                    'students'=>$this->repo->students($actor,$now,$cursor===''?'':Rules::id($cursor),Rules::choice($request->query['status']??'active',['active','all','trial','permanent','inactive'])),
-                    'student'=>$this->repo->detail($actor,Rules::id($request->query['studentId']??null),$now),
-                    'applications'=>$this->repo->applications($actor,$cursor===''?'':Rules::id($cursor),Rules::choice($request->query['status']??'all',['all','pending','accepted','rejected'])),
-                    'payments'=>$this->repo->payments($actor,Rules::id($request->query['studentId']??null),$now,$cursor===''?'':$this->month($cursor)),
-                    'changes'=>$this->repo->changes($actor,$this->cursor($request->query['after']??'0'),isset($request->query['studentId'])?Rules::id($request->query['studentId']):null),
+                    'students'=>$this->repo->students($readActor,$now,$cursor===''?'':Rules::id($cursor),Rules::choice($request->query['status']??'active',['active','all','trial','permanent','inactive'])),
+                    'student'=>$this->repo->detail($readActor,Rules::id($request->query['studentId']??null),$now),
+                    'applications'=>$this->repo->applications($readActor,$cursor===''?'':Rules::id($cursor),Rules::choice($request->query['status']??'all',['all','pending','accepted','rejected'])),
+                    'payments'=>$this->repo->payments($readActor,Rules::id($request->query['studentId']??null),$now,$cursor===''?'':$this->month($cursor)),
+                    'changes'=>$this->repo->changes($readActor,$this->cursor($request->query['after']??'0'),isset($request->query['studentId'])?Rules::id($request->query['studentId']):null),
                     'devices'=>$this->devices($actor),
                     default=>throw new ApiError(404,'not_found'),
                 };

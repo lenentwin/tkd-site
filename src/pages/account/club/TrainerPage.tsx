@@ -24,7 +24,7 @@ function StudentDetails({ student, updated, refresh }: { student: ClubStudent; u
     catch (error) { setError(error instanceof Error ? error.message : "Не удалось изменить оплату."); } finally { setBusy(false); }
   }
   return <section className="club-details"><div className="cabinet-section-heading"><h2>{fullName(student)}</h2><button className="text-link" disabled={busy} onClick={() => { setBusy(true); void refresh().then(() => { setRevision(value => value + 1); setError(""); }).catch(error => setError(error instanceof Error ? error.message : "Не удалось обновить карточку.")).finally(() => setBusy(false)); }}>Обновить карточку</button></div>
-    <p>Статус: {learningLabels[student.status]}</p><div className="cabinet-field-grid"><label>Статус обучения<select value={status} onChange={event => setStatus(event.target.value as ClubStudent["status"])}>{Object.entries(learningLabels).map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label><label>Причина изменения<input value={reason} maxLength={500} onChange={event => setReason(event.target.value)} /></label></div>
+    <p>Статус: {learningLabels[student.status]}</p><div className="cabinet-field-grid"><label>Статус обучения<select aria-label="Статус обучения" value={status} onChange={event => setStatus(event.target.value as ClubStudent["status"])}>{Object.entries(learningLabels).map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label><label>Причина изменения<input value={reason} maxLength={500} onChange={event => setReason(event.target.value)} /></label></div>
     <button className="button-secondary" disabled={busy || !!connectionError || status === student.status} onClick={() => void changeStatus()}>Изменить статус</button>
     <h3>Отметка оплаты</h3><label>Месяц оплаты<input type="month" value={selectedMonth} min={student.createdAt.slice(0, 7)} max={month} onChange={event => setMonth(event.target.value)} /></label>
     <p>{payment && payments.data?.currentMonth === month ? payment.status === "paid" ? "Оплачено" : "Не оплачено" : "Нужно обновить данные за выбранный месяц"}</p>
@@ -37,9 +37,15 @@ function StudentDetails({ student, updated, refresh }: { student: ClubStudent; u
 export default function TrainerPage() {
   const club = useClub(); const [filter, setFilter] = useState("active"); const [selected, setSelected] = useState<ClubStudent | null>(null); const [error, setError] = useState(""); const [busy, setBusy] = useState(false);
   const loadStudents = useCallback((cursor: string) => clubApi.students(filter, cursor), [filter]); const loadApplications = useCallback((cursor: string) => clubApi.applications(cursor, "pending"), []);
-  const enabled = !!club.data?.staff && !club.error; const refreshKey = `${club.month}:${club.data?.scopeVersion}`;
+  const enabled = !!club.data?.staff && !club.error; const refreshKey = `${club.month}:${club.data?.scopeVersion}:${club.data?.serverTime}`;
   const students = usePaged(loadStudents, enabled, refreshKey); const applications = usePaged(loadApplications, enabled, refreshKey);
   useEffect(() => setSelected(null), [club.data?.scopeVersion]);
+  const selectedId = selected?.id;
+  useEffect(() => {
+    if (!selectedId) return;
+    const frame = requestAnimationFrame(() => document.querySelector(".club-details")?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth", block: "start" }));
+    return () => cancelAnimationFrame(frame);
+  }, [selectedId]);
   if (club.data && !club.data.staff) return <><h1>Раздел для тренеров</h1><p>Доступ к ученикам определяется назначениями на сервере.</p></>;
   async function decide(id: string, status: "accepted" | "rejected", version: number) {
     setBusy(true); setError(""); try { await clubApi.decide(id, status, version); await Promise.all([students.reload(), applications.reload()]); } catch (error) { setError(error instanceof Error ? error.message : "Не удалось обработать заявку."); } finally { setBusy(false); }
