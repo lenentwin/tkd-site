@@ -97,7 +97,7 @@ console.log(r.status, await r.json());
 
 ## 7. Включить существующий frontend после приёмки
 
-Изменения подготовлены в ветке codex/yandex-auth. После проверки backend объедините её с main. В GitHub → Settings → Secrets and variables → Actions → **Variables** задайте только публичные значения:
+Код backend и адаптер frontend опубликованы в main по подтверждению владельца; исходная ветка codex/yandex-auth сохранена. После ручной проверки backend в GitHub → Settings → Secrets and variables → Actions → **Variables** задайте только публичные значения:
 
 ```text
 VITE_API_BASE_URL=https://api.mft39.ru
