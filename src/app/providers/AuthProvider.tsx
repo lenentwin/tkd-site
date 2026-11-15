@@ -31,6 +31,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const refresh = useCallback(async () => {
     if (!yandexAuthEnabled) return;
     const request = ++sequence.current;
+    if (!navigator.onLine) { setUnavailable(true); setLoading(false); return; }
     if (!current.current) setLoading(true);
     try {
       const result = await fetchYandexSession();
@@ -53,6 +54,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const timer = window.setInterval(() => { if (current.current) checkVisible(); }, 60000);
     window.addEventListener("focus", checkVisible);
     window.addEventListener("pageshow", checkVisible);
+    window.addEventListener("online", checkVisible);
+    window.addEventListener("offline", checkVisible);
     document.addEventListener("visibilitychange", checkVisible);
     window.addEventListener("mft39:session-expired", expired);
     return () => {
@@ -61,6 +64,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       window.clearInterval(timer);
       window.removeEventListener("focus", checkVisible);
       window.removeEventListener("pageshow", checkVisible);
+      window.removeEventListener("online", checkVisible);
+      window.removeEventListener("offline", checkVisible);
       document.removeEventListener("visibilitychange", checkVisible);
       window.removeEventListener("mft39:session-expired", expired);
     };

@@ -19,7 +19,7 @@ const browser = await chromium.launch({ executablePath: "C:/Program Files (x86)/
 const errors = [], posts = [], checks = [];
 try {
   for (const width of [390, 768, 1440]) {
-    const context = await browser.newContext({ viewport: { width, height: width === 390 ? 844 : 960 } });
+    const context = await browser.newContext({ serviceWorkers: "block", viewport: { width, height: width === 390 ? 844 : 960 } });
     await context.addInitScript(() => { sessionStorage.setItem("mft39.demo", "on"); sessionStorage.setItem("mft39:intro-seen", "1"); localStorage.setItem("mft39.content.v1", '{"invalid":true}'); });
     const page = await context.newPage();
     page.on("pageerror", e => errors.push(String(e)));

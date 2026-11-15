@@ -1,0 +1,21 @@
+.pwa-footer-action { color: inherit; font: inherit; text-align: left; min-height: 44px; }
+.pwa-footer-action:hover { color: var(--accent); }
+.pwa-footer-action:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+.pwa-notices { position: fixed; z-index: 110; right: max(20px,env(safe-area-inset-right)); bottom: max(20px,env(safe-area-inset-bottom)); width: min(390px,calc(100% - 40px)); }
+.pwa-notice { padding: 22px; background: var(--surface); color: var(--text); border: 1px solid var(--line); border-top: 3px solid var(--accent); box-shadow: 0 10px 32px #0002; }
+.pwa-notice strong { font-size: 16px; }
+.pwa-notice p { margin: 12px 0 0; color: var(--muted); font-size: 13px; line-height: 1.6; }
+.pwa-actions { display: flex; gap: 12px; margin-top: 18px; }
+.pwa-actions button { min-height: 44px; padding: 10px 18px; font-size: 13px; }
+.pwa-dialog { color: var(--text); background: var(--bg); border: 1px solid var(--line); border-top: 3px solid var(--accent); padding: clamp(22px,5vw,38px); width: min(540px,calc(100% - 32px)); max-height: calc(100dvh - 48px); overflow-y: auto; margin: auto; }
+.pwa-dialog::backdrop { background: #0009; }
+.pwa-dialog-heading { display: flex; align-items: flex-start; gap: 20px; justify-content: space-between; margin-bottom: 20px; }
+.pwa-dialog h2 { font-size: 38px; }
+.pwa-dialog-heading button { font-size: 30px; min-width: 44px; min-height: 44px; line-height: 1; margin-top: -6px; }
+.pwa-dialog h3 { font-size: 27px; margin: 24px 0 12px; }
+.pwa-dialog p,.pwa-dialog li { font-size: 14px; line-height: 1.65; }
+.pwa-dialog ol { padding-left: 22px; }
+.pwa-dialog li+li { margin-top: 10px; }
+.pwa-help-note { color: var(--muted); margin: 24px 0; }
+.pwa-dialog>.button-secondary { min-height: 48px; }
+@media (max-width:599px) { .pwa-notices { right: 16px; width: calc(100% - 32px); bottom: max(16px,env(safe-area-inset-bottom)); } .pwa-notice { padding: 18px; } .pwa-dialog h2 { font-size: 32px; } }

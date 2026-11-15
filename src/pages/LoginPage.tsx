@@ -3,8 +3,10 @@ import { Link, Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "../app/providers/AuthProvider";
 import { DisplayText } from "../components/presentation/DisplayText";
 import { yandexAuthEnabled } from "../services/backend";
+import { usePwa } from "../pwa/runtime";
 
 export default function LoginPage() {
+  const { online } = usePwa();
   const { session, signIn, loading, unavailable, refresh } = useAuth();
   const navigate = useNavigate();
   const [busy, setBusy] = useState(false);
@@ -49,13 +51,14 @@ export default function LoginPage() {
           <button
             className="yandex-button"
             onClick={() => void enter()}
-            disabled={busy || loading || (!yandexAuthEnabled && !localDemo)}
+            disabled={busy || loading || (yandexAuthEnabled && !online) || (!yandexAuthEnabled && !localDemo)}
           >
             <span aria-hidden="true">Я</span>
             {busy ? "Подключаемся…" : localDemo ? "Открыть локальную демонстрацию" : "Войти через Яндекс"}
           </button>
         )}
         {error && <p role="alert"><DisplayText text={error} /></p>}
+        {!online && yandexAuthEnabled && <p role="status">Для входа через Яндекс подключитесь к интернету.</p>}
         {loading && <p role="status">Проверяем сессию…</p>}
         {unavailable && <div role="status"><p>Сервис входа временно недоступен. Попробуйте позже.</p><button className="text-link" onClick={() => void refresh()}>Повторить проверку</button></div>}
         {!yandexAuthEnabled && !localDemo && <p role="status">Вход ещё не подключён. Пока можно связаться с тренером.</p>}

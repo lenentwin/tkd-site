@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { copyFile, readFile, stat, writeFile } from "node:fs/promises";
 import { resolve, sep } from "node:path";
+import { createHash } from "node:crypto";
 
 // GitHub Pages has no server-side SPA rewrite. Serve the built application
 // through its custom 404 document, preserving pathname, query and hash.
@@ -30,6 +31,19 @@ if (!/<meta\b[^>]*http-equiv=["']Content-Security-Policy["']/i.test(html)) {
 }
 assert(html.indexOf('http-equiv="Content-Security-Policy"') < html.indexOf("<script"), "CSP must precede scripts");
 await writeFile(resolve(output, "index.html"), html);
+const manifest = JSON.parse(await readFile(resolve(output, "manifest.webmanifest"), "utf8"));
+assert.equal(manifest.name, "MFT39");
+assert.equal(manifest.display, "standalone");
+assert.equal(manifest.scope, "/");
+assert.equal(manifest.start_url, "/");
+for (const size of [192, 512]) {
+  const icon = manifest.icons.find(item => item.sizes === size + "x" + size && item.purpose === "any");
+  assert(icon, "Missing PWA icon " + size);
+  const bytes = await readFile(resolve(output, "." + icon.src));
+  assert.equal(bytes.readUInt32BE(16), size); assert.equal(bytes.readUInt32BE(20), size);
+}
+const worker = await readFile(resolve(output, "sw.js"), "utf8");
+assert(worker.includes(createHash("sha256").update(html).digest("hex")), "PWA shell revision must match final HTML, including CSP");
 await copyFile("CNAME", resolve(output, "CNAME"));
 await copyFile(resolve(output, "index.html"), resolve(output, "404.html"));
 await writeFile(resolve(output, ".nojekyll"), "");

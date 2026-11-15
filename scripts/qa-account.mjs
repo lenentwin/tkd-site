@@ -25,7 +25,7 @@ const errors = [], checks = [], requests = [];
 const check = (width, scenario) => checks.push({ width, scenario, passed: true });
 try {
   for (const width of [320, 390, 768, 1024, 1440, 1920]) {
-    const context = await browser.newContext({ viewport: { width, height: 960 } });
+    const context = await browser.newContext({ serviceWorkers: "block", viewport: { width, height: 960 } });
     await context.addInitScript(() => {
       window.__accountStorageWrites = [];
       const setItem = Storage.prototype.setItem;

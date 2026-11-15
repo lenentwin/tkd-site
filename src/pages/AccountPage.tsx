@@ -13,6 +13,7 @@ import { ClubProvider, useClub } from "./account/club/ClubProvider";
 import ParentTrainings from "./account/club/ParentTrainings";
 import TrainerPage from "./account/club/TrainerPage";
 import DevicesPage from "./account/club/DevicesPage";
+import { usePwa } from "../pwa/runtime";
 
 const items = [
   { to: "/account", label: "Главная" }, { to: "/account/bookings", label: "Мои тренировки" },
@@ -47,6 +48,7 @@ function Profile() {
   </>;
 }
 export default function AccountPage() {
+  const { online } = usePwa();
   const { session, signOut, loading, unavailable, refresh } = useAuth();
   const [error, setError] = useState(""); const [signingOut, setSigningOut] = useState(false);
   const navigate = useNavigate(); const { pathname } = useLocation(); const reduced = useMotionPreference();
@@ -59,7 +61,8 @@ export default function AccountPage() {
       gsap.fromTo(body.current, { opacity: 0, y: reduced ? 0 : 10 }, { opacity: 1, y: 0, duration: reduced ? 0.15 : 0.35, ease: "power2.out", clearProps: "opacity,transform" });
     }, body);
     return () => context.revert();
-  }, [pathname, reduced, authenticated, loading, unavailable]);
+  }, [pathname, reduced, authenticated, loading, unavailable, online]);
+  if (!online) return <main id="main" className="page-shell container cabinet-state"><h1>Для кабинета нужен интернет</h1><p role="status">Подключение отсутствует. Данные учеников, заявки и оплаты не сохраняются для офлайн-доступа. После подключения проверим сессию и загрузим свежие данные.</p><Link className="button-secondary" to="/">Информация о клубе</Link></main>;
   if (loading) return <main id="main" className="page-shell container cabinet-state"><h1>Личный кабинет</h1><p role="status">Проверяем серверную сессию…</p></main>;
   if (unavailable) return <main id="main" className="page-shell container cabinet-state"><h1>Не удалось проверить вход</h1><p role="status">Сервис временно недоступен. Попробуйте ещё раз.</p><button className="button" onClick={() => void refresh()}>Повторить проверку</button><Link className="text-link" to="/contacts">Связаться с тренером</Link></main>;
   if (!session) return <Navigate to="/login" replace />;

@@ -14,7 +14,7 @@ const halls=[{id:"chelnokova",name:"Зал на Челнокова",address:"К�
 const base="http://127.0.0.1:4189";
 try{
 for(const width of [390,1440])for(const theme of ["dark","light"]){
- const context=await browser.newContext({viewport:{width,height:1000},reducedMotion:"reduce"});
+ const context=await browser.newContext({serviceWorkers:"block",viewport:{width,height:1000},reducedMotion:"reduce"});
  await context.addInitScript(theme=>{sessionStorage.setItem("mft39:intro-seen","1");localStorage.setItem("mft39.theme",theme);window.__writes=[];const set=Storage.prototype.setItem;Storage.prototype.setItem=function(k,v){window.__writes.push(String(v));return set.call(this,k,v);};for(const method of ["put","add"]){const original=IDBObjectStore.prototype[method];IDBObjectStore.prototype[method]=function(v,...args){window.__writes.push(JSON.stringify(v));return original.call(this,v,...args);};}},theme);
  const page=await context.newPage();page.on("pageerror",e=>pageErrors.push(String(e)));
  let role="user",available=true,offlineBootstrap=false,month="2026-11",serverTime="2026-11-15T12:00:00Z",saved=false,firstLost=true,conflict=true,revoked=false;

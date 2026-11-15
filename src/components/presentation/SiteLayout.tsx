@@ -11,6 +11,7 @@ import { useTheme } from "../../app/providers/ThemeProvider";
 import AccountLink from "./AccountLink";
 import Icon from "./Icon";
 import { DisplayText, formatDisplayText } from "./DisplayText";
+import { PwaFooterAction } from "../../pwa/PwaControls";
 
 const navigation = [
   { section: "coach", label: "Тренер" },
@@ -180,6 +181,7 @@ export default function SiteLayout({ children }: { children: ReactNode }) {
               ВКонтакте и отзывы
             </Link>
             {import.meta.env.DEV ? <Link to="/editor">Локальный редактор</Link> : null}
+            <PwaFooterAction />
           </div>
           <span className="footer-note">{import.meta.env.DEV ? "Локальный прототип" : "Тхэквондо МФТ · Калининград"}</span>
         </div>

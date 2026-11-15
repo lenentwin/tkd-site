@@ -5,9 +5,12 @@ import App from "./app/App";
 import { ContentProvider } from "./app/providers/ContentProvider";
 import { ThemeProvider } from "./app/providers/ThemeProvider";
 import { AuthProvider } from "./app/providers/AuthProvider";
+import { initializePwa } from "./pwa/runtime";
+import { PwaStatus } from "./pwa/PwaControls";
 import "./styles/global.css";
 import "./app/demo.css";
 
+initializePwa();
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <BrowserRouter>
@@ -15,6 +18,7 @@ createRoot(document.getElementById("root")!).render(
         <ThemeProvider>
           <AuthProvider>
             <App />
+            <PwaStatus />
           </AuthProvider>
         </ThemeProvider>
       </ContentProvider>
