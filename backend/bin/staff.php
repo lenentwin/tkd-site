@@ -11,11 +11,13 @@ if(count($args)!==3||!in_array($args[0],['role','grant','revoke'],true)||!ctype_
 }
 try {
     [$command,$id,$value]=$args;$db=MysqlStore::connect(Config::load(dirname(__DIR__)))->connection();$repo=new Repository($db);$db->beginTransaction();
-    $user=$repo->q('SELECT id,role FROM users WHERE id=? FOR UPDATE',[(int)$id])->fetch();if(!$user){throw new RuntimeException('Unknown user');}
+    $repo->q('SELECT id FROM club_access_lock WHERE id=1 FOR UPDATE')->fetch();
+    $user=$repo->q('SELECT id,role,status FROM users WHERE id=? FOR UPDATE',[(int)$id])->fetch();if(!$user){throw new RuntimeException('Unknown user');}
     if($command==='role'){
         Rules::choice($value,['user','trainer','head_trainer','admin']);
         echo "User #$id: role {$user['role']} -> $value\n";
-        if($apply&&$user['role']!==$value){$repo->q('UPDATE users SET role=? WHERE id=?',[$value,(int)$id]);$repo->audit(null,null,null,'staff.role',$id,['from'=>$user['role'],'to'=>$value,'source'=>'owner_cli'],time());}
+        if($user['role']==='admin'&&$user['status']==='active'&&$value!=='admin'&&(int)$repo->q("SELECT COUNT(*) FROM users WHERE role='admin' AND status='active'")->fetchColumn()<=1){throw new RuntimeException('Last active administrator');}
+        if($apply&&$user['role']!==$value){$repo->q('UPDATE users SET role=?,version=version+1 WHERE id=?',[$value,(int)$id]);$repo->q('UPDATE club_device_tokens SET revoked_at=? WHERE user_id=? AND revoked_at IS NULL',[time(),(int)$id]);$repo->audit(null,null,null,'staff.role',$id,['from'=>$user['role'],'to'=>$value,'source'=>'owner_cli'],time());}
     }else{
         if($user['role']!=='trainer'||!$repo->q('SELECT id FROM club_halls WHERE id=? AND active=1',[$value])->fetch()){throw new RuntimeException('Invalid trainer or hall');}
         $exists=(bool)$repo->q('SELECT user_id FROM club_trainer_halls WHERE user_id=? AND hall_id=?',[(int)$id,$value])->fetch();
@@ -23,6 +25,7 @@ try {
         if($apply&&(($command==='grant'&&!$exists)||($command==='revoke'&&$exists))){
             if($command==='grant'){$repo->q('INSERT INTO club_trainer_halls(user_id,hall_id,assigned_at) VALUES(?,?,?)',[(int)$id,$value,Rules::utc(time())]);}
             else{$repo->q('DELETE FROM club_trainer_halls WHERE user_id=? AND hall_id=?',[(int)$id,$value]);}
+            $repo->q('UPDATE users SET version=version+1 WHERE id=?',[(int)$id]);
             $repo->audit(null,null,$value,'staff.'.$command,$id,['source'=>'owner_cli'],time());
         }
     }

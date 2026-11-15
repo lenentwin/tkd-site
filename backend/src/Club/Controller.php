@@ -26,6 +26,8 @@ final class Controller
             $bucket=hash_hmac('sha256','club:'.$actor['id'],$this->config->get('RATE_LIMIT_KEY'));
             if(!$this->store->allow($bucket,$now,600)){throw new ApiError(429,'rate_limited');}
             $resource=$request->query['resource']??'bootstrap';if(!is_string($resource)){throw new ApiError(422,'invalid_resource');}
+            $admin=new Admin($this->repo);
+            if(str_starts_with($resource,'admin-')){Permissions::admin($actor);}
             if($request->method==='GET'){
                 // A staff member can also be a guardian. Personal view only
                 // reduces authority and never grants access to another family.
@@ -34,12 +36,21 @@ final class Controller
                 $cursor=$request->query['cursor']??'';if(!is_string($cursor)){throw new ApiError(422,'invalid_cursor');}
                 $payload=match($resource){
                     'bootstrap'=>$this->repo->bootstrap($actor,$now),
-                    'students'=>$this->repo->students($readActor,$now,$cursor===''?'':Rules::id($cursor),Rules::choice($request->query['status']??'active',['active','all','trial','permanent','inactive'])),
+                    'students'=>$this->repo->students($readActor,$now,$cursor===''?'':Rules::id($cursor),Rules::choice($request->query['status']??'active',['active','all','trial','permanent','inactive']),Rules::choice($request->query['archived']??'0',['0','1'])==='1'),
                     'student'=>$this->repo->detail($readActor,Rules::id($request->query['studentId']??null),$now),
-                    'applications'=>$this->repo->applications($readActor,$cursor===''?'':Rules::id($cursor),Rules::choice($request->query['status']??'all',['all','pending','accepted','rejected'])),
+                    'applications'=>$this->repo->applications($readActor,$cursor===''?'':Rules::id($cursor),Rules::choice($request->query['status']??'all',['all','pending','accepted','rejected']),$now),
                     'payments'=>$this->repo->payments($readActor,Rules::id($request->query['studentId']??null),$now,$cursor===''?'':$this->month($cursor)),
                     'changes'=>$this->repo->changes($readActor,$this->cursor($request->query['after']??'0'),isset($request->query['studentId'])?Rules::id($request->query['studentId']):null),
                     'devices'=>$this->devices($actor),
+                    'profile'=>Profile::read($this->repo,$actor),
+                    'admin-overview'=>$admin->overview($now),
+                    'admin-users'=>$admin->users($request->query),
+                    'admin-user'=>['user'=>$admin->user($admin->userId($request->query['userId']??null))],
+                    'admin-halls'=>$admin->halls(),
+                    'admin-students'=>$admin->students($request->query,$now),
+                    'admin-applications'=>$admin->applications($request->query,$now),
+                    'admin-audit'=>$admin->audit($request->query),
+                    'student-delete-preview'=>$admin->deletePreview($actor,Rules::id($request->query['studentId']??null),$now),
                     default=>throw new ApiError(404,'not_found'),
                 };
             }else{
@@ -55,6 +66,14 @@ final class Controller
                     'payment'=>$this->repo->payment($actor,Rules::id($data['studentId']??null),$this->month($data['month']??null),Rules::choice($data['status']??null,['paid','unpaid']),Rules::version($data['expectedVersion']??null),Rules::text($data['reason']??'',500,false),$this->month($data['expectedCurrentMonth']??null),$now),
                     'device-create'=>$this->createDevice($actor,$data,$now),
                     'device-revoke'=>$this->revokeDevice($actor,Rules::id($data['id']??null),$now),
+                    'profile'=>Profile::save($this->repo,$actor,$data,$now),
+                    'student-birth-year'=>$this->repo->birthYear($actor,Rules::id($data['studentId']??null),Rules::birthYear($data['birthYear']??null,$now),Rules::version($data['expectedVersion']??null),$now),
+                    'admin-permissions-preview'=>$admin->preview($data),
+                    'admin-user-update'=>$admin->updateUser($actor,$data,$now),
+                    'admin-hall-save'=>$admin->saveHall($actor,$data,$now),
+                    'student-archive'=>$this->repo->archive($actor,Rules::id($data['studentId']??null),Rules::version($data['expectedVersion']??null),Rules::text($data['reason']??null,500),false,$now),
+                    'student-restore'=>$this->repo->archive($actor,Rules::id($data['studentId']??null),Rules::version($data['expectedVersion']??null),Rules::text($data['reason']??null,500),true,$now),
+                    'student-delete'=>$admin->deleteStudent($actor,$data,$now),
                     default=>throw new ApiError(404,'not_found'),
                 };
             }

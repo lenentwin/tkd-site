@@ -2,7 +2,7 @@
 declare(strict_types=1);
 require __DIR__.'/mysql-bootstrap.php';
 use Mft39\Club\{Repository,Rules};
-$repo=new Repository($pdo);$actor=$store->user($argv[2]);$now=strtotime('2026-11-15T12:00:00Z');
+$repo=new Repository($pdo);$actor=$store->user($argv[2]);$actor=array_merge($actor,$repo->authority($actor));$now=strtotime('2026-11-15T12:00:00Z');
 try{
     if($argv[1]==='enroll'){
         $input=Rules::input(['students'=>[['lastName'=>'Параллельный','firstName'=>'Тест','middleName'=>'','age'=>25]],'locationId'=>'chelnokova','requestedDate'=>'2026-11-20','consent'=>true,'consentVersion'=>Rules::CONSENT_VERSION],$now);

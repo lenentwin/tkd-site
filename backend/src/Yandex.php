@@ -46,6 +46,8 @@ final class CurlHttpClient implements HttpClient
 
 final class Yandex
 {
+    private array $profile=[];
+    public function profile(): array { return $this->profile; }
     public function __construct(private Config $config, private HttpClient $http) {}
 
     public function authorizeUrl(string $state, string $verifier): string
@@ -76,7 +78,7 @@ final class Yandex
             throw new ApiError(502, 'oauth_invalid_response');
         }
         $user = $this->http->json('https://login.yandex.ru/info?format=json', ['Accept: application/json', 'Authorization: OAuth ' . $token]);
-        // Tokens and additional profile fields are never persisted or returned.
+        // Retain only permitted name fields until the callback completes.
         unset($tokens, $token);
         if (array_key_exists('client_id', $user) && (!is_string($user['client_id']) || !hash_equals($this->config->get('YANDEX_CLIENT_ID'), $user['client_id']))) {
             throw new ApiError(502, 'oauth_invalid_response');
@@ -84,6 +86,7 @@ final class Yandex
         if (!is_string($user['id'] ?? null) || !preg_match('/^[0-9]{1,128}$/D', $user['id'])) {
             throw new ApiError(502, 'oauth_invalid_response');
         }
+        $this->profile=array_intersect_key($user,array_flip(['first_name','last_name','display_name','real_name']));
         return $user['id'];
     }
 }

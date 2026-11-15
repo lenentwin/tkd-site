@@ -7,6 +7,8 @@ use function Mft39\Tests\{config,check};
 use function Mft39\{randomToken,tokenHash};
 $migration=preg_replace('/^\s*--[^\n]*$/m','',file_get_contents(dirname(__DIR__).'/migrations/002_club.sql'));
 foreach(explode(';',$migration) as $sql){if(trim($sql)!==''){$pdo->exec($sql);}}
+$migration=preg_replace('/^\s*--[^\n]*$/m','',file_get_contents(dirname(__DIR__).'/migrations/003_admin_profiles.sql'));
+foreach(explode(';',$migration) as $sql){if(trim($sql)!==''){$pdo->exec($sql);}}
 $now=strtotime('2026-11-15T12:00:00Z');$controller=new Controller(config(),$store);$repo=new Repository($pdo);$cases=0;
 function pass(string $name):void{global $cases;$cases++;echo 'PASS '.$name."\n";}
 function actor(string $yandex,string $role):array{
@@ -143,7 +145,7 @@ try {
     check($status===204&&str_contains($headers,'Access-Control-Allow-Credentials: true'));
     [$status]=$http('GET','bootstrap');check($status===401);
     $headers=['Origin: https://mft39.ru','Cookie: __Host-mft39='.$httpParent['sid']];
-    [$status,,$body]=$http('GET','bootstrap',$headers);check($status===200&&json_decode($body,true)['schemaVersion']===2);
+    [$status,,$body]=$http('GET','bootstrap',$headers);check($status===200&&json_decode($body,true)['schemaVersion']===3);
     $draft=['students'=>[['lastName'=>'Синтетический','firstName'=>'Проверка','age'=>25]],'locationId'=>'school10','requestedDate'=>Rules::day(time()+86400),'consent'=>true,'consentVersion'=>Rules::CONSENT_VERSION];
     [$status]=$http('POST','applications',array_merge($headers,['Content-Type: application/json','Idempotency-Key: http-fixture-idempotent']),$draft);check($status===403);
     $headers=array_merge($headers,['Content-Type: application/json','X-CSRF-Token: '.$httpParent['csrf'],'Idempotency-Key: http-fixture-idempotent']);

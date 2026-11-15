@@ -66,6 +66,9 @@ final class App
                 $code = $request->query['code'] ?? null;
                 if (!is_string($code) || !preg_match('/^[\x21-\x7e]{1,2048}$/D', $code)) { throw new ApiError(400, 'invalid_code'); }
                 $user = $this->store->upsertUser($this->yandex->identify($code, $verifier));
+                if($this->store instanceof MysqlStore&&$this->store->profileReady()){
+                    Club\Profile::initialize(new Club\Repository($this->store->connection()),(int)$user['id'],$this->yandex->profile(),$now);
+                }
                 $token = randomToken();
                 $this->store->putSession(tokenHash($token), [
                     'user_id' => $user['id'], 'csrf_token' => randomToken(), 'created_at' => $now, 'last_seen_at' => $now,
@@ -76,6 +79,9 @@ final class App
                 return $response;
             }
             $session = $hash === null ? null : $this->store->session($hash);
+            if($session!==null&&$session['user_id']!==null&&($this->store->user((string)$session['user_id'])['status']??null)==='blocked'){
+                $this->store->deleteSession($hash);$response->cookie(null);throw new ApiError(403,'account_blocked');
+            }
             // Another tab may poll /me while the browser is at Yandex. A valid
             // pre-auth session is anonymous, but must survive until callback.
             if ($session !== null && $session['user_id'] === null && $now < (int)$session['expires_at']) {
@@ -99,8 +105,11 @@ final class App
                 $response->body = ['authenticated' => false]; return $response;
             }
             $this->store->touch($hash, $now);
-            $response->body = ['authenticated' => true, 'user' => ['id' => (int)$user['id'], 'role' => $user['role']], 'csrfToken' => $session['csrf_token']];
+            $response->body = ['authenticated' => true, 'user' => array_merge(['id' => (int)$user['id'], 'role' => $user['role']],Club\Profile::dto($user)), 'csrfToken' => $session['csrf_token']];
         } catch (ApiError $error) {
+            if($error->error==='account_blocked'&&$request->path==='/auth/yandex/callback'){
+                $response->cookie(null);$response->status=302;$response->headers['Location']=$this->config->get('FRONTEND_URL').'/login?error=account_blocked';return $response;
+            }
             $response->status = $error->status;
             $response->body = ['authenticated' => false, 'error' => $error->error];
             if ($error->status === 429) { $response->headers['Retry-After'] = '600'; }

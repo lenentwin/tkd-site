@@ -39,11 +39,15 @@ jobs:
       - name: OAuth and security tests (fictional data only)
         run: php8.3 backend/tests/run.php
       - name: Club validation and calendar boundaries
-        run: php8.3 backend/tests/club-rules.php
+        run: |
+          php8.3 backend/tests/club-rules.php
+          php8.3 backend/tests/admin-rules.php
       - name: MySQL, concurrency and HTTP integration
         run: php8.3 backend/tests/mysql.php
       - name: Club enrollment, scopes, monthly accounting and concurrency
         run: php8.3 backend/tests/club.php
+      - name: Admin access, archives, profiles, deletion rollback and last-admin race
+        run: php8.3 backend/tests/admin.php
       - name: Restart isolated MySQL and verify persisted club data
         run: |
           docker restart '${{ job.services.mysql.id }}'

@@ -35,7 +35,7 @@ test('first login, PKCE, cookie rotation, minimal profile, discarded tokens', fu
     check($r->status === 302 && $r->headers['Location'] === 'https://mft39.ru/account');
     check($old !== $new && $s->session(tokenHash($old)) === null);
     check(str_contains($start->headers['Set-Cookie'], 'Path=/; Secure; HttpOnly; SameSite=Lax') && !str_contains($start->headers['Set-Cookie'], 'Domain='));
-    check(profile($a, $new)->body['user'] === ['id' => 1, 'role' => 'user']);
+    check(profile($a, $new)->body['user'] === ['id' => 1, 'role' => 'user', 'firstName'=>'', 'lastName'=>'', 'middleName'=>'', 'displayName'=>'Участник MFT39', 'version'=>1]);
     $stored = json_encode([$s->users, $s->sessions]);
     check(!str_contains($stored, 'fictional-token') && !str_contains($stored, 'discard-me') && !str_contains($stored, '@'));
     parse_str($h->calls[0][2], $body); check(isset($body['code_verifier']) && !isset($body['client_secret']));

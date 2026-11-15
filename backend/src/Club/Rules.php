@@ -24,19 +24,28 @@ final class Rules
     }
     public static function id(mixed $value): string { if(!is_string($value)||!preg_match('/^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/D',$value)){throw new ApiError(422,'invalid_id');}return $value; }
     public static function version(mixed $value): int { if(!is_int($value)||$value<0||$value>2147483646){throw new ApiError(422,'version_required');}return $value; }
+    public static function birthYear(mixed $value,int $now): int {
+        $year=(int)substr(self::day($now),0,4);
+        if(!is_int($value)||$value<max(1900,$year-120)||$value>=$year){throw new ApiError(422,'invalid_birth_year');}return $value;
+    }
     public static function choice(mixed $v,array $choices): string { if(!is_string($v)||!in_array($v,$choices,true)){throw new ApiError(422,'invalid_fields');}return $v; }
     public static function input(array $v,int $now): array {
         if(($v['consent']??null)!==true||($v['consentVersion']??null)!==self::CONSENT_VERSION){throw new ApiError(422,'consent_required');}
         if(!isset($v['students'])||!is_array($v['students'])||!array_is_list($v['students'])||count($v['students'])<1||count($v['students'])>20){throw new ApiError(422,'invalid_students');}
         $students=[];foreach($v['students'] as $s){
-            if(!is_array($s)||!is_int($s['age']??null)||$s['age']<1||$s['age']>120){throw new ApiError(422,'invalid_age');}
-            $students[]=['id'=>isset($s['id'])?self::id($s['id']):null,'lastName'=>self::name($s['lastName']??null),'firstName'=>self::name($s['firstName']??null),'middleName'=>self::name($s['middleName']??'',false),'age'=>$s['age']];
+            if(!is_array($s)){throw new ApiError(422,'invalid_students');}
+            $year=array_key_exists('birthYear',$s)?self::birthYear($s['birthYear'],$now):null;
+            $age=$year!==null?(int)substr(self::day($now),0,4)-$year:($s['age']??null);
+            if(!is_int($age)||$age<1||$age>120){throw new ApiError(422,'invalid_age');}
+            $students[]=['id'=>isset($s['id'])?self::id($s['id']):null,'lastName'=>self::name($s['lastName']??null),'firstName'=>self::name($s['firstName']??null),'middleName'=>self::name($s['middleName']??'',false),'age'=>$age,'birthYear'=>$year];
         }
         $hall=self::text($v['locationId']??null,64);if(!preg_match('/^[a-zA-Z0-9_-]+$/D',$hall)){throw new ApiError(422,'invalid_hall');}
         $date=$v['requestedDate']??null;$parsed=is_string($date)?\DateTimeImmutable::createFromFormat('!Y-m-d',$date,new \DateTimeZone('Europe/Kaliningrad')):false;
         $today=(new \DateTimeImmutable('@'.$now))->setTimezone(new \DateTimeZone('Europe/Kaliningrad'))->format('Y-m-d');
         if(!$parsed||$parsed->format('Y-m-d')!==$date||$date<$today){throw new ApiError(422,'invalid_date');}
-        $guardian=null;if(array_filter($students,fn($s)=>$s['age']<18)){
+        // Year alone cannot establish whether the 18th birthday has passed.
+        $minor=fn($s)=>$s['age']<18||($s['birthYear']!==null&&$s['age']===18);
+        $guardian=null;if(array_filter($students,$minor)){
             $g=$v['guardian']??null;if(!is_array($g)){throw new ApiError(422,'guardian_required');}
             $phone=self::text($g['phone']??null,24);if(!preg_match('/^[+0-9 ()-]+$/D',$phone)||!preg_match('/^[0-9]{10,15}$/D',preg_replace('/\D/','',$phone))){throw new ApiError(422,'invalid_phone');}
             $guardian=['lastName'=>self::name($g['lastName']??null),'firstName'=>self::name($g['firstName']??null),'middleName'=>self::name($g['middleName']??'',false),'phone'=>$phone,'relationship'=>self::choice($g['relationship']??null,['parent','guardian'])];

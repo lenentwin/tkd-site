@@ -18,6 +18,7 @@ final class MysqlStore implements Store
 {
     public function __construct(private \PDO $pdo) {}
     public function connection(): \PDO { return $this->pdo; }
+    public function profileReady(): bool { return (bool)$this->query("SHOW COLUMNS FROM users LIKE 'first_name'")->fetch(); }
 
     public static function connect(Config $config): self
     {
@@ -71,7 +72,7 @@ final class MysqlStore implements Store
     }
 
     public function user(string $id): ?array
-    { return $this->query('SELECT id,role,status FROM users WHERE id=?', [$id])->fetch() ?: null; }
+    { return $this->query('SELECT * FROM users WHERE id=?', [$id])->fetch() ?: null; }
 
     public function upsertUser(string $yandexId): array
     {
