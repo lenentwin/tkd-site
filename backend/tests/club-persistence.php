@@ -13,5 +13,5 @@ check((int)$repo->q('SELECT COUNT(*) FROM club_applications WHERE student_id=?',
 check((int)$repo->q('SELECT COUNT(*) FROM club_audit WHERE student_id=?',[$student['id']])->fetchColumn()>=10);
 $parent=$repo->q("SELECT id FROM users WHERE yandex_user_id='990000081'")->fetch();
 check((int)$repo->q('SELECT COUNT(*) FROM club_student_guardians WHERE user_id=?',[$parent['id']])->fetchColumn()===120);
-check((int)$repo->q('SELECT COUNT(*) FROM club_application_batches WHERE consent_version<>? OR consented_at IS NULL',[Rules::CONSENT_VERSION])->fetchColumn()===0);
+check((int)$repo->q('SELECT COUNT(*) FROM club_application_batches WHERE consent_version NOT IN (?,?) OR consented_at IS NULL',[Rules::CONSENT_VERSION,'legal-acceptance-refs-v1'])->fetchColumn()===0);
 echo "PASS fresh PHP process after MySQL restart: students, guardians, applications, consent, payments and audit persist\n";

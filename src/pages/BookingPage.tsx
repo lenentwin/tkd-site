@@ -63,7 +63,7 @@ export default function BookingPage() {
     <p className="cabinet-intro">Запишите себя или детей. Заявка поступит тренеру выбранного зала; дату и зачисление он подтвердит отдельно.</p>
     <ClubConnection />
     {!connected && !club.loading && <div className="cabinet-notice" role="note"><h2>Онлайн-запись пока недоступна</h2><p>Форма ничего не отправляет и не сохраняет. Можно проверить заполнение; для настоящей записи свяжитесь с тренером.</p><Link className="text-link" to="/contacts">Контакты тренера <Icon name="arrow" /></Link></div>}
-    {sent && <div className="cabinet-validation" role="status"><strong>Заявка сохранена и ожидает решения тренера.</strong><Link className="text-link" to="/account/bookings">Мои тренировки <Icon name="arrow" /></Link></div>}
+    {sent && <div className="cabinet-validation" role="status"><strong>Заявка сохранена и ожидает решения тренера.</strong>{" "}<Link className="text-link" to="/account/bookings">Мои тренировки <Icon name="arrow" /></Link></div>}
     <form className="cabinet-form" ref={form} onSubmit={event => void validate(event)} noValidate autoComplete="off" aria-busy={busy}>
       <fieldset className="club-book-fields" disabled={busy}>
       <div className="cabinet-section-heading"><h2>Кто будет тренироваться</h2><span>{students.length === 1 ? "1 ученик" : `Учеников: ${students.length}`}</span></div>
