@@ -8,14 +8,17 @@ export const paymentSchema = z.object({ month: monthSchema, status: z.enum(["pai
 export const studentSchema = z.object({
   id: z.uuid(), locationId: z.string(), lastName: z.string(), firstName: z.string(), middleName: z.string(), age: z.number().int(),
   ageRecordedOn: z.string(), status: z.enum(["trial", "permanent", "inactive"]), admitted: z.boolean(), createdAt: z.string(), version: z.number().int(), payment: paymentSchema,
+  birthYear: z.number().int().nullable().default(null), archived: z.boolean().default(false), archivedAt: z.string().nullable().default(null), archiveReason: z.string().nullable().default(null),
+  guardians: z.array(z.object({ id: z.number().int(), displayName: z.string(), relationship: z.enum(["parent", "guardian", "self"]) })).default([]),
 });
 const guardian = z.object({ lastName: z.string(), firstName: z.string(), middleName: z.string(), phone: z.string(), relationship: z.enum(["parent", "guardian"]) });
 export const applicationSchema = z.object({
   id: z.uuid(), studentId: z.uuid(), locationId: z.string(), lastName: z.string(), firstName: z.string(), middleName: z.string(), age: z.number().int(),
   requestedDate: z.string(), comment: z.string(), guardian: guardian.nullable(), status: z.enum(["pending", "accepted", "rejected"]), version: z.number().int(), createdAt: z.string(),
+  birthYear: z.number().int().nullable().default(null), applicant: z.object({ id: z.number().int(), displayName: z.string() }).optional(),
 });
 export const bootstrapSchema = z.object({
-  schemaVersion: z.literal(2), actor: z.object({ id: z.number().int(), role: userRoleSchema }), staff: z.boolean(),
+  schemaVersion: z.union([z.literal(2), z.literal(3)]), actor: z.object({ id: z.number().int(), role: userRoleSchema }), staff: z.boolean(), permissions: z.array(z.string()).optional(),
   halls: z.array(z.object({ id: z.string(), name: z.string(), address: z.string() })), scopeVersion: z.string(), cursor: z.number().int(), currentMonth: monthSchema, serverTime: z.iso.datetime({ offset: true }),
 });
 const pageOf = <T extends z.ZodType>(item: T) => z.object({ items: z.array(item), nextCursor: z.string().nullable() });
@@ -23,7 +26,11 @@ export const historySchema = z.object({ items: z.array(paymentSchema.extend({ co
 export const auditSchema = z.object({ items: z.array(z.object({ id: z.number(), studentId: z.string().nullable(), actorId: z.number().nullable(), action: z.string(), entityId: z.string(), details: z.record(z.string(), z.unknown()), createdAt: z.string() })), cursor: z.number(), hasMore: z.boolean() });
 const devicesSchema = z.object({ items: z.array(z.object({ id: z.uuid(), label: z.string(), created_at: z.number(), expires_at: z.number(), revoked_at: z.number().nullable() })) });
 const api = "https://api.mft39.ru/api/club/index.php";
+const personalProfile = z.object({ firstName: z.string(), lastName: z.string(), middleName: z.string(), displayName: z.string(), version: z.number().int() });
 const errors: Record<string, string> = {
+  account_blocked: "Доступ к аккаунту ограничен. Свяжитесь с клубом.", permissions_changed: "Права доступа изменились. Обновите страницу и повторите проверку.",
+  invalid_birth_year: "Укажите существующий год рождения.", student_archived: "Карточка находится в архиве. Сначала её необходимо восстановить.",
+  migration_required: "Сервис ожидает обновления серверной части. Обратитесь к администратору клуба.", application_removed: "Связанная карточка удалена. Старая заявка не будет отправлена повторно.",
   version_conflict: "Данные уже изменились на сервере. Обновите карточку, проверьте изменения и повторите действие.",
   month_changed: "Начался новый месяц. Обновите данные и проверьте выбранный месяц оплаты.",
   duplicate_application: "Заявка на эту дату и в этот зал уже существует. Проверьте раздел «Мои тренировки».",
@@ -55,6 +62,8 @@ async function request<T extends z.ZodType>(resource: string, schema: T, query: 
   if (!response.ok) {
     if (response.status === 401) window.dispatchEvent(new Event("mft39:session-expired"));
     let code = "unavailable"; try { const error = await response.json(); if (typeof error.error === "string") code = error.error; } catch { /* Never echo raw server HTML. */ }
+    if (code === "account_blocked") window.dispatchEvent(new Event("mft39:account-blocked"));
+    if (code === "permissions_changed") window.dispatchEvent(new Event("mft39:access-changed"));
     throw new ClubError(response.status, code);
   }
   let json: unknown;
@@ -66,7 +75,7 @@ export type ClubStudent = z.infer<typeof studentSchema>;
 export type ClubApplication = z.infer<typeof applicationSchema>;
 export const clubApi = {
   bootstrap: () => request("bootstrap", bootstrapSchema),
-  students: (status = "active", cursor = "", own = false) => request("students", pageOf(studentSchema), { status, cursor, view: own ? "own" : "staff" }),
+  students: (status = "active", cursor = "", own = false, archived = false) => request("students", pageOf(studentSchema), { status, cursor, view: own ? "own" : "staff", archived: archived ? "1" : "0" }),
   student: (studentId: string) => request("student", studentSchema, { studentId }),
   applications: (cursor = "", status = "all", own = false) => request("applications", pageOf(applicationSchema), { cursor, status, view: own ? "own" : "staff" }),
   enroll: (body: TrainingBookingRequest, key: string) => request("applications", z.object({ batchId: z.uuid(), applicationIds: z.array(z.uuid()).min(1), replayed: z.boolean() }), {}, body, key),
@@ -78,4 +87,15 @@ export const clubApi = {
   devices: () => request("devices", devicesSchema),
   createDevice: (label: string) => request("device-create", z.object({ id: z.uuid(), token: z.string(), expiresAt: z.number() }), {}, { label }),
   revokeDevice: (id: string) => request("device-revoke", z.object({ id: z.uuid(), revoked: z.boolean() }), {}, { id }),
+  profile: () => request("profile", z.object({ profile: personalProfile })),
+  saveProfile: (firstName: string, lastName: string, middleName: string, expectedVersion: number) => request("profile", z.object({ profile: personalProfile }), {}, { firstName, lastName, middleName, expectedVersion }),
+  birthYear: (studentId: string, birthYear: number, expectedVersion: number) => request("student-birth-year", z.object({ student: studentSchema }), {}, { studentId, birthYear, expectedVersion }),
+  archive: (studentId: string, expectedVersion: number, reason: string, restore = false) => request(restore ? "student-restore" : "student-archive", z.object({ student: studentSchema }), {}, { studentId, expectedVersion, reason }),
 };
+export function canClub(data: ClubBootstrap | null, permission: string): boolean {
+  if (!data?.staff) return false;
+  // Schema 2 remains a display-compatible fallback during a staged rollout;
+  // new server-provided grants are authoritative as soon as schema 3 is live.
+  if (data.schemaVersion === 3) return data.permissions?.includes(permission) ?? false;
+  return ["applications.decide", "students.status", "payments.write"].includes(permission);
+}

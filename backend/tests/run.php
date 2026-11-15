@@ -128,4 +128,9 @@ test('CGI/FastCGI content headers are parsed without HTTP prefix', function () {
         $request=Request::globals();check($request->headers['content-type']==='application/json'&&$request->headers['content-length']==='42'&&$request->path==='/api/club'&&$request->https);
     }finally{[$_SERVER,$_GET,$_COOKIE]=$saved;}
 });
+test('blocked OAuth callback redirects to a readable frontend state', function () {
+    [$a,$s,$h]=fixture();[$sid,$q]=begin($a);$r=finish($a,$h,$sid,$q['state']);
+    $s->users[1]['status']='blocked';[$sid,$q]=begin($a);$r=finish($a,$h,$sid,$q['state']);
+    check($r->status===302&&$r->headers['Location']==='https://mft39.ru/login?error=account_blocked'&&cookie($r)==='');
+});
 echo "Tests: $passed passed, $failed failed\n"; exit($failed === 0 ? 0 : 1);

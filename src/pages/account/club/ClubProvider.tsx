@@ -12,7 +12,7 @@ export function currentPayment(payment: { month: string; status: "paid" | "unpai
 const ClubContext = createContext<{ data: ClubBootstrap | null; loading: boolean; error: string; month: string; reload: () => Promise<void> } | null>(null);
 export function ClubProvider({ children }: { children: ReactNode }) {
   const { session } = useAuth();
-  const identity = session?.mode === "server" ? `${session.id}:${session.role}` : "demo";
+  const identity = session?.mode === "server" ? `${session.id}:${session.role}:${session.profileVersion}` : "demo";
   const [data, setData] = useState<ClubBootstrap | null>(null); const [loading, setLoading] = useState(true); const [error, setError] = useState("");
   const [month, setMonth] = useState(() => kaliningradMonth(Date.now()));
   const clock = useRef({ server: Date.now(), received: performance.now(), wall: Date.now() }); const request = useRef(0); const requestedMonth = useRef("");

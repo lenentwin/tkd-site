@@ -48,7 +48,7 @@ final class Repository
     }
     public function bootstrap(array $actor,int $now): array {
         if((int)$this->q('SELECT version FROM club_schema_version WHERE id=1')->fetchColumn()!==3){throw new ApiError(503,'migration_required');}
-        $halls=$this->halls($actor);return ['schemaVersion'=>3,'actor'=>['id'=>(int)$actor['id'],'role'=>$actor['role']],'halls'=>$halls,'staff'=>self::staff($actor),'permissions'=>$actor['permissions']??[],
+        $halls=$this->halls($actor);return ['schemaVersion'=>($actor['native']??false)?2:3,'capabilitiesVersion'=>3,'actor'=>['id'=>(int)$actor['id'],'role'=>$actor['role']],'halls'=>$halls,'staff'=>self::staff($actor),'permissions'=>$actor['permissions']??[],
             'scopeVersion'=>hash('sha256',json_encode([$actor['role'],$actor['accessVersion']??0,$actor['permissions']??[],array_column($halls,'id')])),'cursor'=>(int)$this->q('SELECT COALESCE(MAX(id),0) FROM club_audit')->fetchColumn(),'currentMonth'=>Rules::month($now),'serverTime'=>gmdate('c',$now)];
     }
     public function studentDto(array $r,string $month,?int $now=null): array {

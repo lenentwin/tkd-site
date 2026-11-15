@@ -1,7 +1,9 @@
 import { useCallback, useState } from "react";
+import { useAuth } from "../../../app/providers/AuthProvider";
 import { clubApi, type ClubStudent } from "../../../services/club";
 import { ClubConnection, currentPayment, useClub } from "./ClubProvider";
 import { usePaged } from "./usePaged";
+import { BirthYearEditor, studentAgeText } from "./StudentIdentity";
 export const learningLabels = { trial: "Пробный", permanent: "Постоянный", inactive: "Неактивный" };
 export const applicationLabels = { pending: "Ожидает решения", accepted: "Принята", rejected: "Отклонена" };
 export function fullName(student: { lastName: string; firstName: string; middleName: string }) { return [student.lastName, student.firstName, student.middleName].filter(Boolean).join(" "); }
@@ -11,6 +13,7 @@ export function PaymentLabel({ student }: { student: ClubStudent }) {
   return <span className={`club-badge is-${status}`}>{month}: {status === "paid" ? "Оплачено" : status === "unpaid" ? "Не оплачено" : "Нужно обновить"}</span>;
 }
 export function HistoryView({ studentId, own = false }: { studentId: string; own?: boolean }) {
+  const { session } = useAuth(); const staff = session?.mode === "server" && session.role !== "user";
   const { month, data, error } = useClub(); const enabled = !!data && !error;
   const loadPayments = useCallback((cursor: string) => clubApi.payments(studentId, cursor, own), [studentId, own]);
   const loadAudit = useCallback(async (cursor: string) => { const value = await clubApi.audit(studentId, Number(cursor), own); return { items: value.items, nextCursor: value.hasMore ? String(value.cursor) : null }; }, [studentId, own]);
@@ -18,7 +21,7 @@ export function HistoryView({ studentId, own = false }: { studentId: string; own
   return <section className="club-history"><h3>История оплат</h3>
     {(payments.error || audit.error) && <p role="alert" className="cabinet-error">{payments.error || audit.error}<button className="text-link" onClick={() => { void payments.reload(); void audit.reload(); }}>Повторить загрузку</button></p>}
     {payments.busy && <p role="status">Загружаем историю…</p>}
-    <ul>{payments.data?.items.map(payment => <li key={payment.month}><strong>{payment.month}</strong><span>{payment.status === "paid" ? "Оплачено" : "Не оплачено"}</span>{payment.confirmedAt && <small>Подтверждение: {dateTime(payment.confirmedAt)} · тренер #{payment.confirmedBy}</small>}</li>)}</ul>
+    <ul>{payments.data?.items.map(payment => <li key={payment.month}><strong>{payment.month}</strong><span>{payment.status === "paid" ? "Оплачено" : "Не оплачено"}</span>{payment.confirmedAt && <small>Подтверждение: {dateTime(payment.confirmedAt)}{staff ? ` · тренер #${payment.confirmedBy}` : ""}</small>}</li>)}</ul>
     {payments.data?.nextCursor && <button className="text-link" disabled={payments.busy} onClick={() => void payments.more()}>Предыдущие месяцы</button>}
     <h3>История изменений</h3><ul>{audit.data?.items.map(event => <li key={event.id}><time>{dateTime(event.createdAt)}</time><span>{({ "student.created": "Ученик добавлен", "application.created": "Заявка создана", "application.accepted": "Заявка принята", "application.rejected": "Заявка отклонена", "student.status": "Изменён статус обучения", "payment.status": "Изменена отметка оплаты" } as Record<string, string>)[event.action] ?? "Изменение записи"}</span><small>{typeof event.details.from === "string" && typeof event.details.to === "string" ? `${({ ...learningLabels, paid: "Оплачено", unpaid: "Не оплачено", ...applicationLabels } as Record<string, string>)[event.details.from] ?? event.details.from} → ${({ ...learningLabels, paid: "Оплачено", unpaid: "Не оплачено", ...applicationLabels } as Record<string, string>)[event.details.to] ?? event.details.to}` : ""}{typeof event.details.reason === "string" ? ` ${event.details.reason}` : ""}</small></li>)}</ul>
     {audit.data?.nextCursor && <button className="text-link" disabled={audit.busy} onClick={() => void audit.more()}>Показать ещё изменения</button>}
@@ -34,7 +37,7 @@ export default function ParentTrainings() {
     {(students.busy || applications.busy) && <p role="status">Загружаем заявки и учеников…</p>}
     {applications.data && <><h2>Мои заявки</h2>{applications.data.items.length === 0 ? <p>Вы ещё не подавали заявок.</p> : <div className="club-list">{applications.data.items.map(application => <article key={application.id}><h3>{fullName(application)}</h3><p>{club.data?.halls.find(hall => hall.id === application.locationId)?.name}</p><p>Желаемая дата: {application.requestedDate}</p><span className="club-badge">{applicationLabels[application.status]}</span></article>)}</div>}
     {applications.data.nextCursor && <button className="text-link" disabled={applications.busy} onClick={() => void applications.more()}>Показать ещё заявки</button>}</>}
-    {students.data && <><h2>Ученики</h2>{students.data.items.length === 0 && <p>Ученики появятся после подачи заявки.</p>}<div className="club-list">{students.data.items.map(student => <article key={student.id}><h3>{fullName(student)}</h3><p>Возраст при добавлении: {student.age} · {learningLabels[student.status]}{!student.admitted ? " · ещё не зачислен" : ""}</p><PaymentLabel student={student} /><button className="text-link" onClick={() => setSelected(value => value === student.id ? null : student.id)}>История оплат и статусов</button>{selected === student.id && <HistoryView key={student.id} studentId={student.id} own />}</article>)}</div>
+    {students.data && <><h2>Ученики</h2>{students.data.items.length === 0 && <p>Ученики появятся после подачи заявки.</p>}<div className="club-list">{students.data.items.map(student => <article key={student.id}><h3>{fullName(student)}</h3><p>{studentAgeText(student, club.month)} · {learningLabels[student.status]}{!student.admitted ? " · ещё не зачислен" : ""}</p><PaymentLabel student={student} /><BirthYearEditor key={student.id + ":" + student.version} student={student} saved={students.reload} /><button className="text-link" onClick={() => setSelected(value => value === student.id ? null : student.id)}>История оплат и статусов</button>{selected === student.id && <HistoryView key={student.id} studentId={student.id} own />}</article>)}</div>
     {students.data.nextCursor && <button className="text-link" disabled={students.busy} onClick={() => void students.more()}>Показать ещё учеников</button>}</>}
   </>;
 }

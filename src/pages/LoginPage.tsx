@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, Navigate, useNavigate } from "react-router-dom";
+import { Link, Navigate, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../app/providers/AuthProvider";
 import { DisplayText } from "../components/presentation/DisplayText";
 import { yandexAuthEnabled } from "../services/backend";
@@ -7,7 +7,8 @@ import { usePwa } from "../pwa/runtime";
 
 export default function LoginPage() {
   const { online } = usePwa();
-  const { session, signIn, loading, unavailable, refresh } = useAuth();
+  const [search] = useSearchParams();
+  const { session, signIn, loading, unavailable, blocked, refresh } = useAuth();
   const navigate = useNavigate();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -24,6 +25,7 @@ export default function LoginPage() {
       setBusy(false);
     }
   }
+  if (blocked || search.get("error") === "account_blocked") return <main id="main" className="page-shell container cabinet-state"><h1>Доступ к аккаунту ограничен</h1><p>Для уточнения причины и восстановления доступа свяжитесь с администратором клуба.</p><Link className="button-secondary" to="/contacts">Контакты клуба</Link><Link className="text-link" to="/login" onClick={() => void refresh()}>Повторить вход после разблокировки</Link></main>;
   if (session && !unavailable && !loading) return <Navigate to="/account" replace />;
   return (
     <main id="main" className="page-shell demo-page container">

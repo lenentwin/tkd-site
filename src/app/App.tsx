@@ -20,6 +20,7 @@ import { useAuth } from "./providers/AuthProvider";
 const EditorPage = import.meta.env.DEV ? lazy(() => import("../editor/EditorPage")) : null;
 const LoginPage = lazy(() => import("../pages/LoginPage"));
 const AccountPage = lazy(() => import("../pages/AccountPage"));
+const AdminPage = lazy(() => import("../pages/admin/AdminPage"));
 
 function LegacyBookingRedirect() {
   const { session, loading, unavailable, refresh } = useAuth();
@@ -61,7 +62,7 @@ function RouteEffects() {
   useEffect(() => {
     const meta = content.pages[pathname];
     const robots = document.querySelector<HTMLMetaElement>('meta[name="robots"]');
-    if (robots) robots.content = import.meta.env.DEV || ["/editor", "/login", "/booking"].includes(pathname) || pathname === "/account" || pathname.startsWith("/account/") ? "noindex,nofollow" : "index,follow";
+    if (robots) robots.content = import.meta.env.DEV || ["/editor", "/login", "/booking"].includes(pathname) || pathname === "/account" || pathname.startsWith("/account/") || pathname === "/admin" || pathname.startsWith("/admin/") ? "noindex,nofollow" : "index,follow";
     document.title =
       meta?.title ?? `Страница не найдена — ${content.brand.shortName}`;
     const description = document.querySelector<HTMLMetaElement>(
@@ -126,6 +127,7 @@ export default function App() {
             <Route path="/vk" element={<VkPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/account/*" element={<AccountPage />} />
+            <Route path="/admin/*" element={<AdminPage />} />
             <Route path="/booking" element={<LegacyBookingRedirect />} />
             <Route
               path="/gallery"

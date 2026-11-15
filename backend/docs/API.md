@@ -15,10 +15,10 @@ Origin frontend: `https://mft39.ru`. API: `https://api.mft39.ru`.
 Успешный профиль:
 
 ```json
-{"authenticated":true,"user":{"id":1,"role":"user"},"csrfToken":"<43 символа base64url>"}
+{"authenticated":true,"user":{"id":1,"role":"user","displayName":"Имя участника","firstName":"Имя","lastName":"","middleName":"","version":1},"csrfToken":"<43 символа base64url>"}
 ```
 
-`id` внутренний. Допустимые роли: user/trainer/head_trainer. Yandex ID, имя, email, телефон и OAuth-токены клиенту не выдаются. csrfToken хранится только в памяти JavaScript, не является session ID. Реальные полномочия определяет только сервер; API смены ролей отсутствует. Новые аккаунты имеют только user.
+`id` внутренний. Роли: user/trainer/head_trainer/admin. После003 профиль включает имена/displayName/version; ФИО редактируется владельцем через Club profile. В UI обычного user ID/роль скрыты. Yandex user ID, email, телефон, аватар и OAuth-токены не выдаются. csrfToken остаётся только в памяти. Роли меняет только admin через ADMIN_API.md; новые аккаунты всегда user.
 
 Без сессии: HTTP 401 `{"authenticated":false,"error":"unauthenticated"}`. Ошибки состояния: invalid_state/expired_state (400), oauth_denied (400), oauth_rejected (400), oauth_unavailable/oauth_invalid_response (502). Ошибки origin/CSRF/blocked: 403. Ограничение частоты: 429 + Retry-After:600. Внутренний отказ: 503 `{"error":"service_unavailable"}` без деталей. В ответах нет отражения query/error_description или данных upstream.
 
@@ -29,3 +29,5 @@ CORS отражает только точный разрешённый Origin; �
 State хранится как SHA-256, привязан к SHA-256 session ID. SELECT FOR UPDATE и погашение до сетевого обмена обеспечивают один callback на state. После ошибки нужно начать новый вход. Токены Яндекса существуют только в памяти обработки callback и не попадают в собственную сессию. Хеши IP для rate limits получаются HMAC с серверным ключом, а не сохраняются как IP; старые окна очищаются. Используется REMOTE_ADDR, входящему X-Forwarded-For доверия нет.
 
 Основа OAuth: [официальный Authorization Code + PKCE](https://yandex.ru/dev/id/doc/ru/codes/code-url), [API пользователя и client_id](https://yandex.ru/dev/id/doc/ru/user-information). API вызывается с Authorization header, а не OAuth-токеном в URL.
+
+После003 заблокированный callback ведёт на /login?error=account_blocked с понятным экраном; /api/me возвращает403 account_blocked. Повторный OAuth не перезаписывает ручные изменения ФИО. [Профили и admin API](ADMIN_API.md).

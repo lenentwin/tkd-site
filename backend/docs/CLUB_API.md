@@ -16,7 +16,7 @@ All responses include `ok`, `currentMonth` (YYYY-MM, Europe/Kaliningrad), `serve
 
 | resource | Query | Result beyond common fields |
 |---|---|---|
-| bootstrap | none | schemaVersion:2, actor:{id,role}, staff, halls:[{id,name,address,active}], scopeVersion, cursor |
+| bootstrap | none | schemaVersion:3 (web), capabilitiesVersion:3, permissions, actor:{id,role}, staff, halls:[{id,name,address,active}], scopeVersion, cursor |
 | students | status=active/all/trial/permanent/inactive, cursor=last UUID, optional view=own | items:Student[], nextCursor:null or UUID; limit 100; staff lists only admitted students; personal lists include pending/unadmitted |
 | student | studentId, optional view=own | single Student |
 | applications | status=all/pending/accepted/rejected, cursor=last UUID, optional view=own | items:Application[], nextCursor; limit 100 |
@@ -32,7 +32,7 @@ Student: `{id,locationId,lastName,firstName,middleName,age,ageRecordedOn,status,
 
 ```json
 {
-  "students":[{"lastName":"Фиктивный","firstName":"Пример","middleName":"","age":10}],
+  "students":[{"lastName":"Фиктивный","firstName":"Пример","middleName":"","birthYear":2016}],
   "guardian":{"lastName":"Фиктивный","firstName":"Родитель","middleName":"","phone":"+70000000000","relationship":"parent"},
   "locationId":"chelnokova","requestedDate":"2027-01-20","comment":"Синтетический пример",
   "consent":true,"consentVersion":"club-2026-11-13"
@@ -68,3 +68,4 @@ The server is authoritative. Offline cached paid can be displayed only for the s
 Only Russian api.mft39.ru/MySQL receives real personal information. No analytics, external error reporting, request-body logging or personal test data in GitHub. Web server/proxy must exclude query, Cookie, Authorization and bodies from logs; existing OAuth callback rules remain mandatory. App exceptions log one fixed marker only. Runtime DB account should have SELECT/INSERT/UPDATE on club data, SELECT/INSERT only on club_audit, and required old auth cleanup permissions; DDL/grant administration belongs to separate owner credentials. bin/ is private CLI, never web accessible.
 
 Concurrency uses explicit transactions and row locks; see the [MySQL locking documentation](https://dev.mysql.com/doc/refman/8.0/en/innodb-locking-reads.html). Production hosting was not changed by development; owner installation instructions are in DEPLOYMENT_CLUB_RU.md.
+После003: web bootstrap schemaVersion3, native сохраняет2 с capabilitiesVersion3. Заявки сайта передают birthYear, legacy age принимается как снимок. Прежние URL/cookies/CSRF/expectedVersion и помесячная модель сохраняются. [Права, архив и профиль](ADMIN_API.md).

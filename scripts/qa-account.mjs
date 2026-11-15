@@ -92,14 +92,14 @@ try {
       check(width, "validation errors and focus");
       await page.getByLabel("Фамилия ученика", { exact: true }).fill("Проверкин");
       await page.getByLabel("Имя ученика", { exact: true }).fill("Тест");
-      await page.getByLabel("Возраст, полных лет", { exact: true }).fill("9");
+      await page.getByLabel("Год рождения ученика", { exact: true }).fill("2017");
       await page.getByLabel("Фамилия представителя", { exact: true }).fill("Проверкин");
       await page.getByLabel("Имя представителя", { exact: true }).fill("Пример");
       await page.getByLabel("Телефон представителя", { exact: true }).fill("+70000000000");
       await page.getByRole("button", { name: "Добавить ещё ученика" }).click();
       await page.getByLabel("Фамилия ученика", { exact: true }).nth(1).fill("Проверкин");
       await page.getByLabel("Имя ученика", { exact: true }).nth(1).fill("Пример");
-      await page.getByLabel("Возраст, полных лет", { exact: true }).nth(1).fill("12");
+      await page.getByLabel("Год рождения ученика", { exact: true }).nth(1).fill("2014");
       await page.getByLabel("Спортивный зал", { exact: true }).selectOption({ index: 1 });
       await page.getByLabel("Желаемая дата тренировки", { exact: true }).fill("2099-01-02");
       await page.getByLabel("Согласие на обработку данных", { exact: true }).check();

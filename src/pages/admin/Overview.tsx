@@ -1,0 +1,9 @@
+import { useCallback, useState } from "react";
+import { Link } from "react-router-dom";
+import { adminApi } from "../../services/admin";
+import { AuditList, dateTime, ResultState, useAdminResource } from "./shared";
+const counts = [["students", "Ученики", "/admin/students"], ["trial", "Пробные", "/admin/students"], ["permanent", "Постоянные", "/admin/students"], ["inactive", "Неактивные", "/admin/students"], ["pending", "Ожидают решения", "/admin/students"], ["unpaid", "Без подтверждения оплаты", "/admin/students"], ["halls", "Залы", "/admin/halls"], ["trainers", "Тренеры", "/admin/users"], ["archived", "В архиве", "/admin/archive"]] as const;
+export default function Overview() {
+  const [revision, setRevision] = useState(0); const data = useAdminResource(useCallback(() => adminApi.overview(), []), revision);
+  return <><div className="admin-section-heading"><div><h2>Клуб сегодня</h2><p>Рабочий состав, заявки и подтверждения оплаты.</p></div><button className="button-secondary" disabled={data.busy} onClick={() => setRevision(value => value + 1)}>Обновить</button></div><ResultState {...data} retry={() => setRevision(value => value + 1)} />{data.data && <><p className="admin-muted">Оплаты за {data.data.currentMonth}. Данные сервера: {dateTime(data.data.serverTime)}.</p><div className="admin-counts">{counts.map(([key, label, to]) => <Link to={to} key={key}><strong>{data.data!.counts[key]}</strong><span>{label}</span></Link>)}</div><p className="admin-note">Архив учитывается отдельно от рабочего состава. Отсутствие отметки за выбранный месяц означает, что оплата не подтверждена.</p><div className="admin-section-heading"><h2>Последние изменения</h2><Link className="text-link" to="/admin/audit">Вся история действий</Link></div><AuditList events={data.data.events} /></>}</>;
+}

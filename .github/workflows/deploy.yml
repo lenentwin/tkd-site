@@ -43,6 +43,10 @@ jobs:
         run: npx playwright install --with-deps chromium
       - name: Verify PWA, offline privacy and explicit updates
         run: npm run test:pwa
+      - name: Verify production admin, profiles, permissions and birth-year UI
+        env:
+          ADMIN_QA_PRODUCTION: '1'
+        run: npm run test:admin
       - name: Upload dist only
         uses: actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b # v4
         with:

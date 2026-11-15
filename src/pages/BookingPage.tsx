@@ -1,5 +1,6 @@
 import { useRef, useState, type FormEvent } from "react";
 import { Link, useSearchParams } from "react-router-dom";
+import { useAuth } from "../app/providers/AuthProvider";
 import { useContent } from "../app/providers/ContentProvider";
 import { CLUB_CONSENT_VERSION, localToday, trainingBookingSchema } from "../types/trainingBooking";
 import Icon from "../components/presentation/Icon";
@@ -7,22 +8,22 @@ import { formatDisplayText } from "../components/presentation/DisplayText";
 import { clubApi } from "../services/club";
 import { ClubConnection, useClub } from "./account/club/ClubProvider";
 
-type StudentDraft = { key: string; lastName: string; firstName: string; middleName: string; age: string };
-const newStudent = (): StudentDraft => ({ key: crypto.randomUUID(), lastName: "", firstName: "", middleName: "", age: "" });
+type StudentDraft = { key: string; lastName: string; firstName: string; middleName: string; birthYear: string };
+const newStudent = (): StudentDraft => ({ key: crypto.randomUUID(), lastName: "", firstName: "", middleName: "", birthYear: "" });
 const blankGuardian = { lastName: "", firstName: "", middleName: "", relationship: "parent" as "parent" | "guardian", phone: "" };
 export default function BookingPage() {
   const { content } = useContent(); const [params] = useSearchParams();
-  const club = useClub();
+  const club = useClub(); const { session } = useAuth(); const year = Number(localToday().slice(0,4));
   const [students, setStudents] = useState<StudentDraft[]>(() => [newStudent()]);
-  const [guardian, setGuardian] = useState(blankGuardian);
+  const [guardian, setGuardian] = useState(() => ({ ...blankGuardian, firstName: session?.mode === "server" ? session.firstName ?? "" : "", lastName: session?.mode === "server" ? session.lastName ?? "" : "", middleName: session?.mode === "server" ? session.middleName ?? "" : "" }));
   const [locationId, setLocation] = useState(() => content.locations.some(item => item.id === params.get("location")) ? params.get("location")! : "");
   const [date, setDate] = useState(""); const [errors, setErrors] = useState<Record<string, string>>({}); const [checked, setChecked] = useState(false);
   const form = useRef<HTMLFormElement>(null);
   const [comment, setComment] = useState(""); const [busy, setBusy] = useState(false); const sending = useRef(false);
   const [consent, setConsent] = useState(false);
   const [sent, setSent] = useState(false); const [sendError, setSendError] = useState(""); const key = useRef(crypto.randomUUID());
-  const connected = !!club.data && !club.error && !club.loading;
-  const hasMinor = students.some(student => /^\d+$/.test(student.age) && Number(student.age) > 0 && Number(student.age) < 18);
+  const connected = club.data?.schemaVersion === 3 && !club.error && !club.loading;
+  const hasMinor = students.some(student => /^\d{4}$/.test(student.birthYear) && year-Number(student.birthYear) >= 1 && year-Number(student.birthYear) <= 18);
   const fieldError = (key: string) => errors[key] ? <span className="cabinet-error" id={`error-${key}`}>{errors[key]}</span> : null;
   const accessibility = (key: string) => ({ "aria-invalid": !!errors[key], "aria-describedby": errors[key] ? `error-${key}` : undefined });
   const changed = () => { setChecked(false); setErrors({}); setSent(false); setSendError(""); key.current = crypto.randomUUID(); };
@@ -30,7 +31,7 @@ export default function BookingPage() {
     event.preventDefault();
     if (sending.current) return;
     const result = trainingBookingSchema(content.locations.map(item => item.id)).safeParse({
-      students: students.map(({ lastName, firstName, middleName, age }) => ({ lastName, firstName, middleName, age })),
+      students: students.map(({ lastName, firstName, middleName, birthYear }) => ({ lastName, firstName, middleName, birthYear })),
       guardian: hasMinor ? guardian : undefined, locationId, requestedDate: date, comment, consent, consentVersion: CLUB_CONSENT_VERSION,
     });
     if (result.success) {
@@ -62,14 +63,14 @@ export default function BookingPage() {
         <legend>Ученик {index + 1}</legend>
         {students.length > 1 && <button type="button" className="cabinet-remove" aria-label={`Убрать ученика ${index + 1}`} onClick={() => { setStudents(items => items.filter(item => item.key !== student.key)); changed(); }}>Убрать <Icon name="close" /></button>}
         <div className="cabinet-field-grid">{([
-          ["lastName", "Фамилия ученика"], ["firstName", "Имя ученика"], ["middleName", "Отчество (необязательно)"], ["age", "Возраст, полных лет"],
+          ["lastName", "Фамилия ученика"], ["firstName", "Имя ученика"], ["middleName", "Отчество (необязательно)"], ["birthYear", "Год рождения ученика"],
         ] as const).map(([field, label]) => {
           const key = `students.${index}.${field}`;
-          return <label key={field}>{label}<input aria-label={label} name={key} type={field === "age" ? "number" : "text"} inputMode={field === "age" ? "numeric" : "text"} min={field === "age" ? 1 : undefined} max={field === "age" ? 120 : undefined} step={field === "age" ? 1 : undefined} maxLength={field !== "age" ? 80 : undefined} required={field !== "middleName"} value={student[field]} {...accessibility(key)} onChange={event => { setStudents(items => items.map(item => item.key === student.key ? { ...item, [field]: event.target.value } : item)); changed(); }} />{fieldError(key)}</label>;
+          return <label key={field}>{label}<input aria-label={label} name={key} type={field === "birthYear" ? "number" : "text"} inputMode={field === "birthYear" ? "numeric" : "text"} min={field === "birthYear" ? Math.max(1900,year-120) : undefined} max={field === "birthYear" ? year-1 : undefined} step={field === "birthYear" ? 1 : undefined} maxLength={field !== "birthYear" ? 80 : undefined} required={field !== "middleName"} value={student[field]} {...accessibility(key)} onChange={event => { setStudents(items => items.map(item => item.key === student.key ? { ...item, [field]: event.target.value } : item)); changed(); }} />{fieldError(key)}</label>;
         })}</div>
       </fieldset>)}
       <button type="button" className="cabinet-add" disabled={students.length >= 20} onClick={() => { setStudents(items => [...items, newStudent()]); changed(); }}><Icon name="plus" />Добавить ещё ученика</button>
-      {hasMinor && <fieldset className="cabinet-guardian"><legend>Родитель или законный представитель</legend><p>Укажите одного представителя для несовершеннолетних учеников в этой форме.</p><div className="cabinet-field-grid">
+      {hasMinor && <fieldset className="cabinet-guardian"><legend>Родитель или законный представитель</legend><p>Укажите одного представителя для несовершеннолетних учеников в этой форме. В год 18-летия также просим сведения представителя: точный день рождения не собирается.</p><div className="cabinet-field-grid">
         {([ ["lastName", "Фамилия представителя"], ["firstName", "Имя представителя"], ["middleName", "Отчество представителя (необязательно)"], ["phone", "Телефон представителя"] ] as const).map(([field, label]) => {
           const key = `guardian.${field}`; return <label key={field}>{label}<input aria-label={label} name={key} type={field === "phone" ? "tel" : "text"} maxLength={field === "phone" ? 24 : 80} required={field !== "middleName"} value={guardian[field]} {...accessibility(key)} onChange={event => { setGuardian(value => ({ ...value, [field]: event.target.value })); changed(); }} />{fieldError(key)}</label>;
         })}

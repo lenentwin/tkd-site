@@ -98,7 +98,7 @@ expected(api($admin,'POST','admin-hall-save',['id'=>$h['id'],'name'=>'Тесто
 check(count(expected(api($admin,'GET','admin-halls'),200)['items'])>=4);passed('real statistics, paginated search/filter SQL injection probes and additive hall management');
 $device=expected(api($trainer,'POST','device-create',['label'=>'Синтетическое устройство']),200);
 $nativeHeaders=['authorization'=>'Bearer '.$device['token']];$native=function(string $resource)use($controller,$nativeHeaders,$now){return $controller->handle(new Request('GET','/api/club',['resource'=>$resource],$nativeHeaders),'',$now);};
-check($native('bootstrap')->status===200);
+$nativeBootstrap=$native('bootstrap');check($nativeBootstrap->status===200&&$nativeBootstrap->body['schemaVersion']===2&&$nativeBootstrap->body['capabilitiesVersion']===3);
 access($admin,$trainer,['status'=>'blocked']);
 expected(api($trainer,'GET','bootstrap'),403);check($native('bootstrap')->status===401);
 $blockedProfile=$app->handle(new Request('GET','/api/me',cookies:['__Host-mft39'=>$trainer['sid']]),$now);check($blockedProfile->status===403&&$blockedProfile->body['error']==='account_blocked');

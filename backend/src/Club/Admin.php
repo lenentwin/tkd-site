@@ -17,8 +17,9 @@ final class Admin
         if(!$date||$date->format('Y-m-d')!==$value){throw new ApiError(422,'invalid_date');}return $value;
     }
     private function dates(array $query,string $column,array &$where,array &$args): void {
-        if(($query['from']??'')!==''){$where[]="$column>=?";$args[]=$this->date($query['from']).' 00:00:00';}
-        if(($query['to']??'')!==''){$where[]="$column<?";$args[]=(new \DateTimeImmutable($this->date($query['to'])))->modify('+1 day')->format('Y-m-d').' 00:00:00';}
+        $zone=new \DateTimeZone('Europe/Kaliningrad');
+        if(($query['from']??'')!==''){$where[]="$column>=?";$args[]=Rules::utc((new \DateTimeImmutable($this->date($query['from']),$zone))->getTimestamp());}
+        if(($query['to']??'')!==''){$where[]="$column<?";$args[]=Rules::utc((new \DateTimeImmutable($this->date($query['to']),$zone))->modify('+1 day')->getTimestamp());}
     }
     private function paged(string $select,string $from,array $where,array $args,int $page,string $order): array {
         $clause=$where?' WHERE '.implode(' AND ',$where):'';

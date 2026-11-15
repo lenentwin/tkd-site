@@ -6,6 +6,7 @@ import { useContent } from "../app/providers/ContentProvider";
 import { useMotionPreference } from "../animations/useMotionPreference";
 import { yandexAuthEnabled } from "../services/backend";
 import BookingPage from "./BookingPage";
+import ProfilePage, { roleLabels } from "./account/ProfilePage";
 import Icon from "../components/presentation/Icon";
 import { DisplayText } from "../components/presentation/DisplayText";
 import "./account/account.css";
@@ -37,19 +38,9 @@ function Overview() {
 function Trainings() {
   return <ParentTrainings />;
 }
-function Profile() {
-  const { session } = useAuth();
-  if (!session) return null;
-  const roles = { user: "Пользователь", trainer: "Тренер", head_trainer: "Главный тренер", admin: "Администратор" };
-  return <><p className="eyebrow">Личный кабинет</p><h1>Мои данные</h1><p className="cabinet-intro">Аккаунт принадлежит вам. Ученик, которого вы записываете, может быть вашим ребёнком.</p>
-    <dl className="cabinet-profile"><div><dt>Способ входа</dt><dd>{session.mode === "server" ? "Яндекс ID" : "Локальная демонстрация"}</dd></div>
-      {session.mode === "server" && <><div><dt>Номер аккаунта MFT39</dt><dd>{session.id}</dd></div><div><dt>Роль</dt><dd>{roles[session.role]}</dd></div></>}
-    </dl><div className="cabinet-notice"><h2>Аккаунт и ученики</h2><p>ФИО, возраст и телефон из Яндекса не запрашиваются. Ученики связаны с аккаунтом отдельно; их заявки и статусы находятся в разделе «Мои тренировки».</p></div>
-  </>;
-}
 export default function AccountPage() {
   const { online } = usePwa();
-  const { session, signOut, loading, unavailable, refresh } = useAuth();
+  const { session, signOut, loading, unavailable, blocked, refresh } = useAuth();
   const [error, setError] = useState(""); const [signingOut, setSigningOut] = useState(false);
   const navigate = useNavigate(); const { pathname } = useLocation(); const reduced = useMotionPreference();
   const body = useRef<HTMLDivElement>(null);
@@ -63,6 +54,7 @@ export default function AccountPage() {
     return () => context.revert();
   }, [pathname, reduced, authenticated, loading, unavailable, online]);
   if (!online) return <main id="main" className="page-shell container cabinet-state"><h1>Для кабинета нужен интернет</h1><p role="status">Подключение отсутствует. Данные учеников, заявки и оплаты не сохраняются для офлайн-доступа. После подключения проверим сессию и загрузим свежие данные.</p><Link className="button-secondary" to="/">Информация о клубе</Link></main>;
+  if (blocked) return <main id="main" className="page-shell container cabinet-state"><h1>Доступ к аккаунту ограничен</h1><p>Свяжитесь с администратором клуба для уточнения причины.</p><Link className="button-secondary" to="/contacts">Контакты клуба</Link></main>;
   if (loading) return <main id="main" className="page-shell container cabinet-state"><h1>Личный кабинет</h1><p role="status">Проверяем серверную сессию…</p></main>;
   if (unavailable) return <main id="main" className="page-shell container cabinet-state"><h1>Не удалось проверить вход</h1><p role="status">Сервис временно недоступен. Попробуйте ещё раз.</p><button className="button" onClick={() => void refresh()}>Повторить проверку</button><Link className="text-link" to="/contacts">Связаться с тренером</Link></main>;
   if (!session) return <Navigate to="/login" replace />;
@@ -75,14 +67,16 @@ export default function AccountPage() {
   const staff = session.mode === "server" && session.role !== "user";
   const navigation = staff ? [...items, { to: "/account/trainer", label: "Ученики и заявки" }] : items;
   return <ClubProvider><main id="main" className="container cabinet page-shell">
-    <aside className="cabinet-sidebar"><div className="cabinet-identity"><span className="cabinet-mark" aria-hidden="true">МФТ</span><div><strong>Личный кабинет</strong><span>{session.mode === "server" ? "Вход через Яндекс ID" : "Локальная демонстрация"}</span></div></div>
+    <aside className="cabinet-sidebar"><div className="cabinet-identity"><span className="cabinet-mark" aria-hidden="true">МФТ</span><div><strong>{session.displayName}</strong><span>{session.mode === "server" ? "Вход через Яндекс ID" : "Локальная демонстрация"}</span></div></div>
+      {staff && <p className="cabinet-small">{roleLabels[session.role]} · ID {session.id}</p>}
+      {session.mode === "server" && session.role === "admin" && <Link className="button-secondary" to="/admin">Административная панель</Link>}
       <nav aria-label="Разделы личного кабинета">{navigation.map(item => <NavLink key={item.to} to={item.to} end={item.to === "/account"} className={({ isActive }) => isActive ? "is-current" : ""}>{item.label}<Icon name="arrow" /></NavLink>)}</nav>
       <button className="cabinet-logout" onClick={() => void leave()} disabled={signingOut}>{signingOut ? "Завершаем сессию…" : "Выход из аккаунта"}<Icon name="external" /></button>
       {error && <p role="alert" className="cabinet-error">{error}</p>}
     </aside>
     <div className="cabinet-content" ref={body}><Routes>
       <Route index element={<Overview />} /><Route path="bookings" element={<Trainings />} />
-      <Route path="book" element={<BookingPage />} /><Route path="profile" element={<Profile />} />
+      <Route path="book" element={<BookingPage />} /><Route path="profile" element={<ProfilePage />} />
       <Route path="trainer" element={<TrainerPage />} /><Route path="devices" element={<DevicesPage />} />
       <Route path="*" element={<><h1>Раздел не найден</h1><Link to="/account" className="button">На главную кабинета</Link></>} />
     </Routes></div>

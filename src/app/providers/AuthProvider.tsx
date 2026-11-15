@@ -1,12 +1,13 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import type { UserSession } from "../../types/services";
 import { yandexAuthEnabled } from "../../services/backend";
-import { fetchYandexSession, logoutYandexSession, yandexStartUrl } from "../../services/yandexAuth";
+import { AccountBlockedError, fetchYandexSession, logoutYandexSession, yandexStartUrl } from "../../services/yandexAuth";
 
 const AuthContext = createContext<{
   session: UserSession | null;
   loading: boolean;
   unavailable: boolean;
+  blocked: boolean;
   refresh: () => Promise<void>;
   signIn: () => Promise<void>;
   signOut: () => Promise<void>;
@@ -24,6 +25,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   });
   const [loading, setLoading] = useState(yandexAuthEnabled);
   const [unavailable, setUnavailable] = useState(false);
+  const [blocked, setBlocked] = useState(false);
   const current = useRef(session);
   const sequence = useRef(0);
   const alive = useRef(true);
@@ -39,8 +41,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       current.current = result.session;
       setSession(result.session);
       setUnavailable(false);
-    } catch {
-      if (alive.current && request === sequence.current) setUnavailable(true);
+      setBlocked(false);
+    } catch (error) {
+      if (alive.current && request === sequence.current) {
+        setUnavailable(!(error instanceof AccountBlockedError)); setBlocked(error instanceof AccountBlockedError);
+        if (error instanceof AccountBlockedError) { current.current = null; setSession(null); }
+      }
     } finally {
       if (alive.current && request === sequence.current) setLoading(false);
     }
@@ -51,6 +57,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     void refresh();
     const checkVisible = () => { if (document.visibilityState === "visible") void refresh(); };
     const expired = () => { invalidatePending(); current.current = null; setSession(null); setLoading(false); setUnavailable(false); };
+    const denied = () => { invalidatePending(); current.current = null; setSession(null); setLoading(false); setUnavailable(false); setBlocked(true); };
     const timer = window.setInterval(() => { if (current.current) checkVisible(); }, 60000);
     window.addEventListener("focus", checkVisible);
     window.addEventListener("pageshow", checkVisible);
@@ -58,6 +65,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     window.addEventListener("offline", checkVisible);
     document.addEventListener("visibilitychange", checkVisible);
     window.addEventListener("mft39:session-expired", expired);
+    window.addEventListener("mft39:account-blocked", denied);
+    window.addEventListener("mft39:access-changed", checkVisible);
     return () => {
       alive.current = false;
       invalidatePending();
@@ -68,6 +77,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       window.removeEventListener("offline", checkVisible);
       document.removeEventListener("visibilitychange", checkVisible);
       window.removeEventListener("mft39:session-expired", expired);
+      window.removeEventListener("mft39:account-blocked", denied);
+      window.removeEventListener("mft39:access-changed", checkVisible);
     };
   }, [refresh, invalidatePending]);
   return (
@@ -76,6 +87,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         session,
         loading,
         unavailable,
+        blocked,
         refresh,
         signIn: async () => {
           if (yandexAuthEnabled) {

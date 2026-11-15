@@ -122,6 +122,8 @@ try {
     state.offline = true; await context.setOffline(true); await page.reload(); await page.getByText("Вы без интернета", { exact: true }).waitFor(); await page.locator(".hero-main-action a").waitFor(); check("offline public shell works after reload");
     await page.goto(base + "/contacts"); await page.getByRole("heading", { level: 1 }).waitFor(); await fit(page); check("offline public client route");
     await page.goto(base + "/account/trainer"); await page.getByRole("heading", { name: "Для кабинета нужен интернет", exact: true }).waitFor(); assert(!await page.locator("main").innerText().then(text => text.includes(privateMarker))); check("private routes show explicit offline state");
+    await page.goto(base + "/admin/archive"); await page.getByRole("heading", { name: "Нет подключения", exact: true }).waitFor(); assert(!await page.locator("main").innerText().then(text => text.includes(privateMarker))); check("admin route requires network with real service worker");
+    await page.goto(base + "/account/trainer"); await page.getByRole("heading", { name: "Для кабинета нужен интернет", exact: true }).waitFor();
     const rejected = await page.evaluate(async () => { try { await fetch("/api/probe"); return false; } catch { return true; } }); assert(rejected); check("offline API is rejected, no cached or synthetic response");
     await page.screenshot({ path: "test-results/pwa/screenshots/offline-android.png", scale: "css" });
     state.offline = false; await context.setOffline(false); await page.waitForURL("**/login"); check("reconnect validates session and redirects anonymous visitor");
