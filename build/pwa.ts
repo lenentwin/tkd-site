@@ -33,7 +33,13 @@ export function mft39Pwa(): Plugin {
       await walk(output);
       entries.sort((a, b) => a.url.localeCompare(b.url));
       if (!entries.some(entry => entry.url === "/index.html") || !entries.some(entry => entry.url === "/manifest.webmanifest")) throw new Error("Missing PWA shell/manifest");
-      const version = createHash("sha256").update(JSON.stringify(entries)).digest("hex").slice(0, 20);
+      // Worker-only fixes need an isolated cache too: a failed new install
+      // must never remove the cache still owned by the active worker.
+      const versionHash = createHash("sha256").update(JSON.stringify(entries));
+      for (const source of ["src/sw.ts", "src/pwa/policy.ts"]) {
+        versionHash.update(await readFile(resolve(config.root, source)));
+      }
+      const version = versionHash.digest("hex").slice(0, 20);
       const result = await build({
         configFile: false, root: config.root, publicDir: false, logLevel: "error",
         define: { __MFT39_PRECACHE__: JSON.stringify(entries), __MFT39_PWA_BUILD__: JSON.stringify(version) },

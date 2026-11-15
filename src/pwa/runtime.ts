@@ -40,7 +40,10 @@ export function initializePwa() {
   window.addEventListener("offline", () => setState({ online: false }));
   const media = window.matchMedia("(display-mode: standalone)");
   media.addEventListener("change", () => setState({ standalone: standalone(), installed: state.installed || standalone() }));
-  if (!import.meta.env.PROD || !window.isSecureContext || !("serviceWorker" in navigator)) return;
+  if (!import.meta.env.PROD || !window.isSecureContext) return;
+  let serviceWorker: ServiceWorkerContainer;
+  try { serviceWorker = navigator.serviceWorker; if (!serviceWorker) return; }
+  catch { return; } // Storage/privacy policies must never prevent site startup.
   setState({ supported: true });
   window.addEventListener("beforeinstallprompt", event => {
     event.preventDefault(); installPrompt = event as InstallPromptEvent;
@@ -48,10 +51,10 @@ export function initializePwa() {
   window.addEventListener("appinstalled", () => {
     installPrompt = undefined; setState({ installed: true, installHelp: false, installing: false });
   });
-  let controller = navigator.serviceWorker.controller;
+  let controller = serviceWorker.controller;
   const controlledAtStart = !!controller;
-  navigator.serviceWorker.addEventListener("controllerchange", () => {
-    const next = navigator.serviceWorker.controller;
+  serviceWorker.addEventListener("controllerchange", () => {
+    const next = serviceWorker.controller;
     if (next === controller) return;
     if (reloadRequested) { window.location.reload(); return; }
     if (controller) setState({ updateReady: true, updateVisible: true });
@@ -70,14 +73,14 @@ export function initializePwa() {
       if (worker.state === "installed" && replacesActive) announce(registration?.waiting ?? worker);
     });
   };
-  void navigator.serviceWorker.register("/sw.js", { scope: "/", updateViaCache: "none" }).then(value => {
+  try { void serviceWorker.register("/sw.js", { scope: "/", updateViaCache: "none" }).then(value => {
     registration = value;
     if (controlledAtStart) announce(value.waiting);
     observe(value.installing);
     value.addEventListener("updatefound", () => observe(value.installing));
   }).catch(() => {
     // Registration failure never blocks the regular site or changes its auth.
-  });
+  }); } catch { /* Some browser policies throw synchronously. Use the site. */ }
   window.addEventListener("focus", () => { if (!document.hidden) void checkForPwaUpdate(); });
   document.addEventListener("visibilitychange", () => { if (!document.hidden) void checkForPwaUpdate(); });
   window.setInterval(() => { if (!document.hidden) void checkForPwaUpdate(); }, 60 * 60 * 1000);

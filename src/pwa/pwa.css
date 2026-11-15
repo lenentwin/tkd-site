@@ -9,6 +9,7 @@
 .pwa-actions button { min-height: 44px; padding: 10px 18px; font-size: 13px; }
 .pwa-dialog { color: var(--text); background: var(--bg); border: 1px solid var(--line); border-top: 3px solid var(--accent); padding: clamp(22px,5vw,38px); width: min(540px,calc(100% - 32px)); max-height: calc(100dvh - 48px); overflow-y: auto; margin: auto; }
 .pwa-dialog::backdrop { background: #0009; }
+.pwa-dialog:not([open]) { display: none; }
 .pwa-dialog-heading { display: flex; align-items: flex-start; gap: 20px; justify-content: space-between; margin-bottom: 20px; }
 .pwa-dialog h2 { font-size: 38px; }
 .pwa-dialog-heading button { font-size: 30px; min-width: 44px; min-height: 44px; line-height: 1; margin-top: -6px; }

@@ -106,6 +106,15 @@ try {
   assert.equal(manifest.name, "MFT39"); assert.equal(manifest.display, "standalone"); assert.equal(manifest.start_url, "/"); assert.equal(manifest.scope, "/");
   for (const icon of manifest.icons) { const png = files.get(icon.src); const [width, height] = icon.sizes.split("x").map(Number); assert.equal(png.readUInt32BE(16), width); assert.equal(png.readUInt32BE(20), height); }
   assert.equal(files.get("/pwa/apple-touch-icon.png").readUInt32BE(16), 180); check("manifest, Android icons, maskable and Apple icon");
+  for (const blocked of ["accessor", "register"]) {
+    const { context, page } = await fixture({ viewport: { width: 390, height: 844 } });
+    await context.addInitScript(blocked => {
+      if (blocked === "accessor") Object.defineProperty(Navigator.prototype, "serviceWorker", { configurable: true, get() { throw new DOMException("Storage blocked", "SecurityError"); } });
+      else Object.defineProperty(ServiceWorkerContainer.prototype, "register", { configurable: true, value() { throw new DOMException("Registration blocked", "SecurityError"); } });
+    }, blocked);
+    await page.goto(base); await page.locator(".hero-main-action a").waitFor(); await fit(page);
+    check("regular site survives synchronously blocked service worker " + blocked); await context.close();
+  }
   active = "A";
   {
     const { context, page, state } = await fixture({ ...devices["Pixel 7"], reducedMotion: "reduce" });
