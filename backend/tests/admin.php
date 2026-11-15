@@ -50,7 +50,7 @@ $callback=$app->handle(new Request('GET','/auth/yandex/callback',['state'=>$quer
 check($callback->status===302);$me=$app->handle(new Request('GET','/api/me',cookies:['__Host-mft39'=>cookie($callback)]),$now+2);check($me->body['user']['displayName']==='Яндекс Имя'&&!str_contains(json_encode($me->body),'fictional-access'));passed('real auth callback path stores allowed Yandex names in MySQL without avatar/token');
 $a=enroll($parent,'chelnokova','АдминПроверка',2017,'admin-real-enrollment-1');$b=enroll($other,'city','ДругойЗал',2016,'admin-real-enrollment-2');$c=enroll($parent,'school10','ТретийЗал',2018,'admin-real-enrollment-3');
 $row=expected(api($trainer,'GET','student',query:['studentId'=>$a['student']]),200);check($row['birthYear']===2017&&$row['age']===9&&$row['guardians'][0]['displayName']==='Родитель Новое Имя');
-$nextYear=expected(api($parent,'GET','student',query:['studentId'=>$a['student']],time:strtotime('2026-12-31T22:00:00Z')),200);check($nextYear['age']===10);check($repo->q('SELECT birth_year FROM club_students WHERE id=?',[$a['student']])->fetchColumn()===2017);
+$nextYear=$repo->detail($parent,$a['student'],strtotime('2026-12-31T22:00:00Z'));check($nextYear['age']===10);check((int)$repo->q('SELECT birth_year FROM club_students WHERE id=?',[$a['student']])->fetchColumn()===2017);
 expected(api($other,'GET','student',query:['studentId'=>$a['student']]),404);expected(api($outside,'GET','student',query:['studentId'=>$a['student']]),404);
 expected(api($outside,'POST','application-decision',['id'=>$a['app'],'status'=>'accepted','expectedVersion'=>1]),404);
 expected(api($other,'POST','student-birth-year',['studentId'=>$a['student'],'birthYear'=>2015,'expectedVersion'=>$row['version']]),403);
