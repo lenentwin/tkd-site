@@ -42,6 +42,7 @@ jobs:
         run: |
           php8.3 backend/tests/club-rules.php
           php8.3 backend/tests/admin-rules.php
+          php8.3 backend/tests/legal-rules.php
       - name: MySQL, concurrency and HTTP integration
         run: php8.3 backend/tests/mysql.php
       - name: Club enrollment, scopes, monthly accounting and concurrency
@@ -58,3 +59,4 @@ jobs:
             sleep 1
           done
           php8.3 backend/tests/club-persistence.php
+          php8.3 backend/tests/legal-persistence.php

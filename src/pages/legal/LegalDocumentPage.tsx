@@ -1,13 +1,16 @@
 import { Link } from "react-router-dom";
+import { usePwa } from "../../pwa/runtime";
 import { LEGAL_DOCUMENTS } from "../../legal/documents";
 import { legalPaths, type LegalDocumentType } from "../../services/legal";
 import LegalMarkdown from "./LegalMarkdown";
 import "./legal.css";
 
 export default function LegalDocumentPage({ type }: { type: LegalDocumentType }) {
+  const { online } = usePwa();
   const document = LEGAL_DOCUMENTS.find((item) => item.type === type);
   if (!document) return <main id="main" className="page-shell container legal-page"><h1>Документ временно недоступен</h1><p>Попробуйте открыть страницу позже или обратитесь в клуб.</p><Link className="button-secondary" to="/contacts">Контакты клуба</Link></main>;
   return <main id="main" className="page-shell container legal-page">
+    {!online ? <p className="legal-notice" role="status">Не удалось проверить актуальность документа: подключение к интернету отсутствует. Сохранённый текст можно прочитать; перед подтверждением подключитесь к интернету и проверьте действующую редакцию.</p> : null}
     <nav className="legal-navigation" aria-label="Юридические документы">
       {LEGAL_DOCUMENTS.map((item) => <Link key={item.type} to={legalPaths[item.type]} aria-current={item.type === type ? "page" : undefined}>{item.title}</Link>)}
     </nav>
