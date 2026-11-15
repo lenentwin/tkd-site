@@ -5,7 +5,7 @@ import { createHash } from "node:crypto";
 import assert from "node:assert/strict";
 
 // Browser-only synthetic fixtures. Never connects to production API/accounts.
-// QA inventory: public full texts + draft labels + navigation; 390/1440 light/dark fit;
+// QA inventory: public full texts + current status + draft rejection + navigation; 390/1440 light/dark fit;
 // account/admin gate before private GET; separate read/checkbox proof + keyboard;
 // exact hash/version payload, no identity fields, no repeat of current acceptance;
 // partial versions; failed saves; offline, logout/home; per-child guardian proof.
@@ -14,7 +14,9 @@ const server = await createServer({ server: { host: "127.0.0.1", port: 4193, str
 await server.listen();
 const browser = await chromium.launch({ headless: true, executablePath: process.env.BROWSER_PATH ?? (process.platform === "win32" ? "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe" : chromium.executablePath()) });
 await mkdir(folder, { recursive: true });
-const draftDocuments = JSON.parse(await readFile("backend/resources/legal-documents.json", "utf8"));
+const sourceDocuments = JSON.parse(await readFile("backend/resources/legal-documents.json", "utf8"));
+// Keep rejection coverage independent of the production document status.
+const draftDocuments = sourceDocuments.map(document => ({ ...document, status: "draft", version: "qa-draft.1" }));
 const routes = { terms: "terms", privacy: "privacy", user_consent: "user-consent", guardian_consent: "guardian-consent" };
 const titles = { terms: "Тестовое пользовательское соглашение", privacy: "Тестовая политика обработки данных", user_consent: "Тестовое согласие пользователя", guardian_consent: "Тестовое согласие представителя" };
 const documents = Object.entries(titles).map(([type, title]) => {
@@ -31,9 +33,9 @@ async function settleTheme(page, expected) {
   await page.waitForFunction(theme => document.documentElement.dataset.theme === theme && !document.documentElement.hasAttribute("data-theme-transition"), expected);
 }
 async function shot(page, name) { await page.screenshot({ path: `${folder}/${name}.png`, scale: "css" }); }
-async function fixture({ role = "user", approved = true, unauthenticated = false, accepted = [], viewport = { width: 1440, height: 1000 } } = {}) {
+async function fixture({ role = "user", approved = true, source = false, unauthenticated = false, accepted = [], viewport = { width: 1440, height: 1000 } } = {}) {
   const state = { role, approved, unauthenticated, accepted: structuredClone(accepted), requests: [], posts: [], failSave: false, authUnavailable: false, offline: false };
-  const activeDocuments = approved ? documents : draftDocuments;
+  const activeDocuments = source ? sourceDocuments : approved ? documents : draftDocuments;
   const legal = () => ({ ok: true, documents: activeDocuments.map(({ type, title, version, hash, status }) => ({ type, title, version, hash, status })), enforcement: true, required: ["terms", "user_consent"].some(type => !state.accepted.some(accepted => { const current = activeDocuments.find(document => document.type === type); return accepted.type === type && accepted.version === current.version && accepted.hash === current.hash; })), canAccept: approved, accepted: state.accepted });
   const profile = { firstName: "Участник", lastName: "Синтетический", middleName: "", displayName: "Синтетический Участник", version: 1 };
   const context = await browser.newContext({ viewport, serviceWorkers: "block", reducedMotion: "reduce" });
@@ -45,7 +47,7 @@ async function fixture({ role = "user", approved = true, unauthenticated = false
   await context.route("**/*", async route => {
     const request = route.request(), url = new URL(request.url());
     if (url.origin === base) {
-      if (approved && url.pathname === "/src/legal/documents.ts") return route.fulfill({ contentType: "application/javascript", body: `export const LEGAL_DOCUMENTS = ${JSON.stringify(documents)};` });
+      if (!source && url.pathname === "/src/legal/documents.ts") return route.fulfill({ contentType: "application/javascript", body: `export const LEGAL_DOCUMENTS = ${JSON.stringify(activeDocuments)};` });
       return route.continue();
     }
     if (url.origin !== "https://api.mft39.ru") return route.abort();
@@ -105,11 +107,11 @@ async function acceptAll(page) {
 }
 try {
   {
-    const { page, context, state } = await fixture({ approved: false, unauthenticated: true });
-    for (const document of draftDocuments) {
+    const { page, context, state } = await fixture({ source: true, unauthenticated: true });
+    for (const document of sourceDocuments) {
       await page.goto(`${base}/legal/${routes[document.type]}`);
       await page.getByRole("heading", { level: 1, name: document.title, exact: true }).waitFor();
-      await page.getByText("Черновик для согласования.", { exact: true }).waitFor();
+      await page.getByText(document.status === "draft" ? "Черновик для согласования." : "Утверждённая редакция", { exact: true }).waitFor();
       const text = await page.locator("article").innerText();
       const last = document.content.trim().split("\n").at(-1).replaceAll("**", "");
       assert(text.includes(last), `Last paragraph missing for ${document.type}`);
@@ -117,7 +119,7 @@ try {
       assert.equal(await page.locator('.footer-legal a[href^="/legal/"]').count(), 4);
       assert.equal(await page.locator(".legal-navigation a").count(), 4);
       await page.keyboard.press("Control+End"); await fit(page);
-      check(`Public draft ${document.type}: complete final paragraph, four footer/navigation links, no acceptance`);
+      check(`Public ${document.status} ${document.type}: complete final paragraph, four footer/navigation links, no acceptance`);
     }
     assert.equal(state.posts.length, 0);
     for (const width of [390, 1440]) {
@@ -126,18 +128,18 @@ try {
         await page.goto(`${base}/legal/privacy`); await page.locator(".legal-page-header h1").waitFor();
         const actual = await page.locator("html").getAttribute("data-theme");
         if (actual !== theme) await page.getByRole("button", { name: theme === "light" ? "Включить светлую тему" : "Включить тёмную тему", exact: true }).click();
-        await settleTheme(page, theme); await page.evaluate(() => document.fonts.ready); await fit(page); await shot(page, `draft-privacy-${width}-${theme}`);
-        check(`Draft privacy ${width}px ${theme}: viewport fit and screenshot`);
+        await settleTheme(page, theme); await page.evaluate(() => document.fonts.ready); await fit(page); await shot(page, `public-privacy-${width}-${theme}`);
+        check(`Public privacy ${width}px ${theme}: viewport fit and screenshot`);
       }
     }
-    for (const document of draftDocuments.filter(document => document.type !== "privacy")) {
+    for (const document of sourceDocuments.filter(document => document.type !== "privacy")) {
       for (const width of [390, 1440]) {
         await page.setViewportSize({ width, height: width === 390 ? 844 : 1000 });
         for (const theme of ["dark", "light"]) {
           await page.goto(`${base}/legal/${routes[document.type]}`); await page.locator(".legal-page-header h1").waitFor();
           if (await page.locator("html").getAttribute("data-theme") !== theme) await page.getByRole("button", { name: theme === "light" ? "Включить светлую тему" : "Включить тёмную тему", exact: true }).click();
-          await settleTheme(page, theme); await page.evaluate(() => document.fonts.ready); await fit(page); await shot(page, `draft-${document.type}-${width}-${theme}`);
-          check(`Draft ${document.type} ${width}px ${theme}: viewport fit and screenshot`);
+          await settleTheme(page, theme); await page.evaluate(() => document.fonts.ready); await fit(page); await shot(page, `public-${document.type}-${width}-${theme}`);
+          check(`Public ${document.type} ${width}px ${theme}: viewport fit and screenshot`);
         }
       }
     }

@@ -18,13 +18,15 @@ function api(?array $u,string $method,string $resource,array $body=[],array $que
 function expected(\Mft39\Response $r,int $s,?string $code=null):array {check($r->status===$s,'Expected '.$s.', got '.$r->status.' '.($r->body['error']??''));if($code!==null){check(($r->body['error']??'')===$code);}return $r->body;}
 $u=member('770000001');$v=member('770000002');$trainer=member('770000003','trainer');$controller=new Controller(config(),$store);
 expected(api($u,'GET','bootstrap'),200);
-$drafts=json_decode(file_get_contents(dirname(__DIR__).'/resources/legal-documents.json'),true,32,JSON_THROW_ON_ERROR);
+$sourceDocuments=json_decode(file_get_contents(dirname(__DIR__).'/resources/legal-documents.json'),true,32,JSON_THROW_ON_ERROR);
+// Draft rejection remains a synthetic fixture after the real documents are approved.
+$drafts=array_map(function($d){$d['status']='draft';$d['version']='synthetic-draft-v1';return $d;},$sourceDocuments);
 $docs=array_map(function($d){$d['status']='approved';$d['version']='synthetic-test-v1';$d['content']="# Synthetic test document\nTest consent fixture; no personal data.\n";$d['hash']=hash('sha256',$d['content']);return $d;},$drafts);
 $cfg=new Config(array_replace(config()->values,['LEGAL_ENFORCEMENT'=>1]));$controller=new Controller($cfg,$store,$docs);
 expected(api($u,'GET','bootstrap'),503,'legal_migration_required');
-$controller=new Controller($cfg,$store);expected(api($u,'GET','bootstrap'),403,'legal_documents_unavailable');pass('enforcement defaults off; missing migration and drafts fail closed when enabled');
+$controller=new Controller($cfg,$store,$drafts);expected(api($u,'GET','bootstrap'),403,'legal_documents_unavailable');pass('enforcement defaults off; missing migration and drafts fail closed when enabled');
 $sql=preg_replace('/^\s*--[^\n]*$/m','',file_get_contents(dirname(__DIR__).'/migrations/004_legal_consents.sql'));foreach(explode(';',$sql) as $statement){if(trim($statement)!==''){$pdo->exec($statement);}}
-$controller=new Controller($cfg,$store);expected(api($u,'POST','legal-accept',['documents'=>[]]),403,'legal_documents_unavailable');
+$controller=new Controller($cfg,$store,$drafts);expected(api($u,'POST','legal-accept',['documents'=>[]]),403,'legal_documents_unavailable');
 $state=expected(api($u,'GET','legal'),200);check($state['required']&&!$state['canAccept']&&count($state['documents'])===4);pass('additive migration applies and unapproved source documents cannot be accepted');
 $controller=new Controller($cfg,$store,$docs);
 function proof(string $type):array {global $docs;$d=array_values(array_filter($docs,fn($d)=>$d['type']===$type))[0];return array_intersect_key($d,array_flip(['type','version','hash']))+['accepted'=>true];}

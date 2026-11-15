@@ -1,6 +1,30 @@
 {
-  "terms": {"file":"terms.md","version":"2026-11-15-draft.1","status":"draft","approvedBy":"","approvedAt":""},
-  "privacy": {"file":"privacy.md","version":"2026-11-15-draft.1","status":"draft","approvedBy":"","approvedAt":""},
-  "user_consent": {"file":"user-consent.md","version":"2026-11-15-draft.1","status":"draft","approvedBy":"","approvedAt":""},
-  "guardian_consent": {"file":"guardian-consent.md","version":"2026-11-15-draft.1","status":"draft","approvedBy":"","approvedAt":""}
+  "terms": {
+    "file": "terms.md",
+    "version": "2026-11-15.1",
+    "status": "approved",
+    "approvedBy": "Тренер Федерации (подтверждено владельцем проекта)",
+    "approvedAt": "2026-11-15"
+  },
+  "privacy": {
+    "file": "privacy.md",
+    "version": "2026-11-15.1",
+    "status": "approved",
+    "approvedBy": "Тренер Федерации (подтверждено владельцем проекта)",
+    "approvedAt": "2026-11-15"
+  },
+  "user_consent": {
+    "file": "user-consent.md",
+    "version": "2026-11-15.1",
+    "status": "approved",
+    "approvedBy": "Тренер Федерации (подтверждено владельцем проекта)",
+    "approvedAt": "2026-11-15"
+  },
+  "guardian_consent": {
+    "file": "guardian-consent.md",
+    "version": "2026-11-15.1",
+    "status": "approved",
+    "approvedBy": "Тренер Федерации (подтверждено владельцем проекта)",
+    "approvedAt": "2026-11-15"
+  }
 }

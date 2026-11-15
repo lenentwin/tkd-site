@@ -32,6 +32,9 @@ jobs:
         run: npm run lint
       - name: Test
         run: npm test
+      - name: Verify approved legal release on main
+        if: github.ref == 'refs/heads/main'
+        run: npm run legal:release-check
       - name: Build production frontend
         env:
           VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
@@ -47,7 +50,7 @@ jobs:
         env:
           ADMIN_QA_PRODUCTION: '1'
         run: npm run test:admin
-      - name: Verify legal drafts, separate confirmations and private route guards
+      - name: Verify legal documents, draft rejection and private route guards
         run: npm run test:legal
       - name: Upload dist only
         uses: actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b # v4
