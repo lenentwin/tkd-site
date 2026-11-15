@@ -43,12 +43,17 @@ const errors: Record<string, string> = {
   student_changed: "Данные ученика отличаются от серверной записи. Обновите список учеников.",
   device_limit: "Достигнут лимит активных доступов. Отзовите ненужный доступ.",
   rate_limited: "Слишком много запросов. Подождите несколько минут и повторите попытку.",
+  legal_required: "Перед использованием кабинета подтвердите актуальные документы.",
+  legal_documents_unavailable: "Юридические документы пока не утверждены. Подтверждение недоступно.",
+  legal_migration_required: "Сервер ожидает обновления механизма согласий.",
+  guardian_consent_required: "Для каждого ребёнка требуется отдельное согласие законного представителя.",
+  legal_confirmation_required: "Подтвердите актуальную редакцию каждого обязательного документа отдельно.",
   consent_required: "Подтвердите согласие на обработку данных перед отправкой заявки.",
 };
 export class ClubError extends Error {
   constructor(public readonly status: number, public readonly code: string) { super(errors[code] ?? (status === 401 ? "Сессия завершилась. Войдите снова." : status === 422 ? "Проверьте заполнение полей." : "Сервис учёта временно недоступен. Повторите попытку позже.")); }
 }
-async function request<T extends z.ZodType>(resource: string, schema: T, query: Record<string, string> = {}, body?: unknown, key?: string): Promise<z.output<T>> {
+export async function request<T extends z.ZodType>(resource: string, schema: T, query: Record<string, string> = {}, body?: unknown, key?: string): Promise<z.output<T>> {
   const headers: Record<string, string> = {};
   if (body !== undefined) {
     let auth: Awaited<ReturnType<typeof fetchYandexSession>>;
@@ -59,6 +64,7 @@ async function request<T extends z.ZodType>(resource: string, schema: T, query: 
     }
     const { session, csrfToken } = auth;
     if (!session || !csrfToken) { window.dispatchEvent(new Event("mft39:session-expired")); throw new ClubError(401, "unauthenticated"); }
+    if (resource !== "legal-accept" && session.mode === "server" && session.legal?.required) { window.dispatchEvent(new Event("mft39:legal-required")); throw new ClubError(403,"legal_required"); }
     headers["Content-Type"] = "application/json"; headers["X-CSRF-Token"] = csrfToken;
     if (key) headers["Idempotency-Key"] = key;
   }
@@ -70,6 +76,7 @@ async function request<T extends z.ZodType>(resource: string, schema: T, query: 
     let code = "unavailable"; try { const error = await response.json(); if (typeof error.error === "string") code = error.error; } catch { /* Never echo raw server HTML. */ }
     if (code === "account_blocked") window.dispatchEvent(new Event("mft39:account-blocked"));
     if (code === "permissions_changed" || (response.status === 403 && code === "forbidden")) window.dispatchEvent(new Event("mft39:access-changed"));
+    if (code === "legal_required" || code === "legal_documents_unavailable" || code === "legal_migration_required") window.dispatchEvent(new Event("mft39:legal-required"));
     throw new ClubError(response.status, code);
   }
   let json: unknown;

@@ -7,8 +7,8 @@ use function Mft39\{randomToken,tokenHash};
 final class Controller
 {
     private Repository $repo; private Gate $gate;
-    public function __construct(private Config $config,private MysqlStore $store) {
-        $this->repo=new Repository($store->connection());$this->gate=new Gate($config,$store,$this->repo);
+    public function __construct(private Config $config,private MysqlStore $store,?array $legalDocuments=null) {
+        $this->repo=new Repository($store->connection(),$config->get('LEGAL_ENFORCEMENT')===1,$legalDocuments);$this->gate=new Gate($config,$store,$this->repo);
     }
     public function handle(Request $request,string $rawBody='',?int $now=null): Response {
         $now??=time();$response=new Response(headers:App::securityHeaders());
@@ -26,6 +26,8 @@ final class Controller
             $bucket=hash_hmac('sha256','club:'.$actor['id'],$this->config->get('RATE_LIMIT_KEY'));
             if(!$this->store->allow($bucket,$now,600)){throw new ApiError(429,'rate_limited');}
             $resource=$request->query['resource']??'bootstrap';if(!is_string($resource)){throw new ApiError(422,'invalid_resource');}
+            $legal=$this->repo->legal();
+            if(!in_array($resource,['legal','legal-accept'],true)){$legal->assertAccess($actor);}
             $admin=new Admin($this->repo);
             if(str_starts_with($resource,'admin-')){Permissions::admin($actor);}
             if($request->method==='GET'){
@@ -35,6 +37,7 @@ final class Controller
                 if(($request->query['view']??null)==='own'){$readActor['role']='user';}
                 $cursor=$request->query['cursor']??'';if(!is_string($cursor)){throw new ApiError(422,'invalid_cursor');}
                 $payload=match($resource){
+                    'legal'=>$legal->status($actor),
                     'bootstrap'=>$this->repo->bootstrap($actor,$now),
                     'students'=>$this->repo->students($readActor,$now,$cursor===''?'':Rules::id($cursor),Rules::choice($request->query['status']??'active',['active','all','trial','permanent','inactive']),Rules::choice($request->query['archived']??'0',['0','1'])==='1'),
                     'student'=>$this->repo->detail($readActor,Rules::id($request->query['studentId']??null),$now),
@@ -60,6 +63,7 @@ final class Controller
                 try{$data=json_decode($rawBody,true,32,JSON_THROW_ON_ERROR);}catch(\JsonException){throw new ApiError(422,'invalid_json');}
                 if(!is_array($data)||array_is_list($data)){throw new ApiError(422,'invalid_json');}
                 $payload=match($resource){
+                    'legal-accept'=>$legal->accept($actor,$data,$now),
                     'applications'=>$this->create($actor,$data,$request,$now),
                     'application-decision'=>$this->repo->decide($actor,Rules::id($data['id']??null),Rules::choice($data['status']??null,['accepted','rejected']),Rules::version($data['expectedVersion']??null),$now),
                     'student-status'=>$this->repo->status($actor,Rules::id($data['studentId']??null),Rules::choice($data['status']??null,['trial','permanent','inactive']),Rules::version($data['expectedVersion']??null),Rules::text($data['reason']??'',500,false),$now),

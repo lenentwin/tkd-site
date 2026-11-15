@@ -2,6 +2,7 @@ export type UserRole = "user" | "trainer" | "head_trainer" | "admin";
 export type UserSession = { mode: "demo"; displayName: string } | {
   mode: "server"; displayName: string; id: number; role: UserRole;
   firstName?: string; lastName?: string; middleName?: string; profileVersion?: number;
+  legal?: {required: boolean; enforcement: boolean; canAccept: boolean};
 };
 export interface AuthService {
   signIn: () => Promise<UserSession>;

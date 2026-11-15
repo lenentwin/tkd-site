@@ -106,6 +106,10 @@ final class App
             }
             $this->store->touch($hash, $now);
             $response->body = ['authenticated' => true, 'user' => array_merge(['id' => (int)$user['id'], 'role' => $user['role']],Club\Profile::dto($user)), 'csrfToken' => $session['csrf_token']];
+            if($this->store instanceof MysqlStore){
+                $legal=(new Club\Repository($this->store->connection(),$this->config->get('LEGAL_ENFORCEMENT')===1))->legal()->status($user);
+                $response->body['legal']=array_intersect_key($legal,array_flip(['required','enforcement','canAccept']));
+            }
         } catch (ApiError $error) {
             if($error->error==='account_blocked'&&$request->path==='/auth/yandex/callback'){
                 $response->cookie(null);$response->status=302;$response->headers['Location']=$this->config->get('FRONTEND_URL').'/login?error=account_blocked';return $response;

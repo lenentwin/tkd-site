@@ -68,6 +68,13 @@ export default function LoginPage() {
           Аккаунт может принадлежать родителю. Данные ученика указываются отдельно в кабинете.
         </p>
         <Link to="/contacts">Связаться с тренером</Link>
+        <nav className="login-legal-links" aria-label="Документы перед входом">
+          <Link to="/legal/terms">Пользовательское соглашение</Link>
+          <Link to="/legal/privacy">Политика обработки персональных данных</Link>
+          <Link to="/legal/user-consent">Согласие пользователя</Link>
+          <Link to="/legal/guardian-consent">Согласие законного представителя</Link>
+        </nav>
+        <p className="demo-note">Вход через Яндекс сам по себе не означает принятия соглашения или предоставления согласия. Документы подтверждаются отдельно после входа.</p>
       </section>
     </main>
   );

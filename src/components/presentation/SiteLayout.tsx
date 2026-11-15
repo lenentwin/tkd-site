@@ -12,6 +12,7 @@ import AccountLink from "./AccountLink";
 import Icon from "./Icon";
 import { DisplayText, formatDisplayText } from "./DisplayText";
 import { PwaFooterAction } from "../../pwa/PwaControls";
+import "../../pages/legal/legal.css";
 
 const navigation = [
   { section: "coach", label: "Тренер" },
@@ -185,6 +186,12 @@ export default function SiteLayout({ children }: { children: ReactNode }) {
           </div>
           <span className="footer-note">{import.meta.env.DEV ? "Локальный прототип" : "Тхэквондо МФТ · Калининград"}</span>
         </div>
+        <nav className="container footer-legal" aria-label="Юридические документы">
+          <Link to="/legal/terms">Пользовательское соглашение</Link>
+          <Link to="/legal/privacy">Политика обработки персональных данных</Link>
+          <Link to="/legal/user-consent">Согласие пользователя</Link>
+          <Link to="/legal/guardian-consent">Согласие законного представителя</Link>
+        </nav>
       </footer>
     </>
   );

@@ -19,4 +19,6 @@ return [
     'SESSION_TTL' => 28800,
     'SESSION_IDLE_TTL' => 1800,
     'OAUTH_TTL' => 300,
+    // Keep 0 while documents are drafts. Enable only after approval and 004.
+    'LEGAL_ENFORCEMENT' => 0,
 ];

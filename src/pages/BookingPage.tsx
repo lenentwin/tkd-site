@@ -1,3 +1,5 @@
+import { LEGAL_DOCUMENTS } from "../legal/documents";
+import LegalDocumentReader from "./legal/LegalDocumentReader";
 import { useRef, useState, type FormEvent } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useAuth } from "../app/providers/AuthProvider";
@@ -8,8 +10,8 @@ import { formatDisplayText } from "../components/presentation/DisplayText";
 import { clubApi } from "../services/club";
 import { ClubConnection, useClub } from "./account/club/ClubProvider";
 
-type StudentDraft = { key: string; lastName: string; firstName: string; middleName: string; birthYear: string };
-const newStudent = (): StudentDraft => ({ key: crypto.randomUUID(), lastName: "", firstName: "", middleName: "", birthYear: "" });
+type StudentDraft = { key: string; lastName: string; firstName: string; middleName: string; birthYear: string; guardianAccepted: boolean };
+const newStudent = (): StudentDraft => ({ key: crypto.randomUUID(), lastName: "", firstName: "", middleName: "", birthYear: "", guardianAccepted: false });
 const blankGuardian = { lastName: "", firstName: "", middleName: "", relationship: "parent" as "parent" | "guardian", phone: "" };
 export default function BookingPage() {
   const { content } = useContent(); const [params] = useSearchParams();
@@ -22,6 +24,10 @@ export default function BookingPage() {
   const form = useRef<HTMLFormElement>(null);
   const [comment, setComment] = useState(""); const [busy, setBusy] = useState(false); const sending = useRef(false);
   const [consent, setConsent] = useState(false);
+  const [guardianRead, setGuardianRead] = useState(false);
+  const legalEnabled = session?.mode === "server" && session.legal?.enforcement === true;
+  const guardianDocument = LEGAL_DOCUMENTS.find(document => document.type === "guardian_consent")!;
+  const isMinor = (student: StudentDraft) => /^\d{4}$/.test(student.birthYear) && year-Number(student.birthYear) >= 1 && year-Number(student.birthYear) <= 18;
   const [sent, setSent] = useState(false); const [sendError, setSendError] = useState(""); const key = useRef(crypto.randomUUID());
   const connected = club.data?.schemaVersion === 3 && !club.error && !club.loading;
   const hasMinor = students.some(student => /^\d{4}$/.test(student.birthYear) && year-Number(student.birthYear) >= 1 && year-Number(student.birthYear) <= 18);
@@ -31,9 +37,10 @@ export default function BookingPage() {
   async function validate(event: FormEvent) {
     event.preventDefault();
     if (sending.current) return;
+    if (legalEnabled && students.some(student => isMinor(student) && (!student.guardianAccepted || !guardianRead || guardianDocument.status !== "approved"))) { setErrors({consent:"Прочитайте и отдельно подтвердите согласие представителя для каждого ребёнка."}); return; }
     const result = trainingBookingSchema(availableHalls.map(item => item.id)).safeParse({
-      students: students.map(({ lastName, firstName, middleName, birthYear }) => ({ lastName, firstName, middleName, birthYear })),
-      guardian: hasMinor ? guardian : undefined, locationId, requestedDate: date, comment, consent, consentVersion: CLUB_CONSENT_VERSION,
+      students: students.map(student => ({ lastName:student.lastName, firstName:student.firstName, middleName:student.middleName, birthYear:student.birthYear, ...(legalEnabled && isMinor(student) ? {guardianConsent:{type:"guardian_consent",version:guardianDocument.version,hash:guardianDocument.hash,accepted:student.guardianAccepted}} : {}) })),
+      guardian: hasMinor ? guardian : undefined, locationId, requestedDate: date, comment, consent:legalEnabled ? true : consent, consentVersion: CLUB_CONSENT_VERSION,
     });
     if (result.success) {
       setErrors({}); setChecked(true); setSendError("");
@@ -41,7 +48,7 @@ export default function BookingPage() {
       sending.current = true; setBusy(true);
       try {
         await clubApi.enroll(result.data, key.current);
-        setSent(true); setStudents([newStudent()]); setGuardian(blankGuardian); setDate(""); setComment(""); setConsent(false); setChecked(false); key.current = crypto.randomUUID();
+        setSent(true); setStudents([newStudent()]); setGuardian(blankGuardian); setDate(""); setComment(""); setConsent(false); setGuardianRead(false); setChecked(false); key.current = crypto.randomUUID();
       } catch (error) { setSendError(error instanceof Error ? error.message : "Не удалось отправить заявку."); }
       finally { sending.current = false; setBusy(false); }
       return;
@@ -67,8 +74,9 @@ export default function BookingPage() {
           ["lastName", "Фамилия ученика"], ["firstName", "Имя ученика"], ["middleName", "Отчество (необязательно)"], ["birthYear", "Год рождения ученика"],
         ] as const).map(([field, label]) => {
           const key = `students.${index}.${field}`;
-          return <label key={field}>{label}<input aria-label={label} name={key} type={field === "birthYear" ? "number" : "text"} inputMode={field === "birthYear" ? "numeric" : "text"} min={field === "birthYear" ? Math.max(1900,year-120) : undefined} max={field === "birthYear" ? year-1 : undefined} step={field === "birthYear" ? 1 : undefined} maxLength={field !== "birthYear" ? 80 : undefined} required={field !== "middleName"} value={student[field]} {...accessibility(key)} onChange={event => { setStudents(items => items.map(item => item.key === student.key ? { ...item, [field]: event.target.value } : item)); changed(); }} />{fieldError(key)}</label>;
+          return <label key={field}>{label}<input aria-label={label} name={key} type={field === "birthYear" ? "number" : "text"} inputMode={field === "birthYear" ? "numeric" : "text"} min={field === "birthYear" ? Math.max(1900,year-120) : undefined} max={field === "birthYear" ? year-1 : undefined} step={field === "birthYear" ? 1 : undefined} maxLength={field !== "birthYear" ? 80 : undefined} required={field !== "middleName"} value={student[field]} {...accessibility(key)} onChange={event => { setStudents(items => items.map(item => item.key === student.key ? { ...item, [field]: event.target.value, guardianAccepted:false } : item)); changed(); }} />{fieldError(key)}</label>;
         })}</div>
+        {legalEnabled && isMinor(student) && <label className="club-consent"><input type="checkbox" name={`guardianConsent.${index}`} aria-label={`Согласие представителя ученика ${index+1}`} checked={student.guardianAccepted} disabled={!guardianRead || guardianDocument.status!=="approved"} onChange={event => {setStudents(items => items.map(item=>item.key===student.key?{...item,guardianAccepted:event.target.checked}:item));changed();}} /><span>Я являюсь законным представителем ученика {index+1}{student.lastName || student.firstName ? ` (${student.lastName} ${student.firstName})` : ""} и даю отдельное согласие на обработку его данных. <a className="text-link" href="#guardian-document">Прочитать полный текст</a></span></label>}
       </fieldset>)}
       <button type="button" className="cabinet-add" disabled={students.length >= 20} onClick={() => { setStudents(items => [...items, newStudent()]); changed(); }}><Icon name="plus" />Добавить ещё ученика</button>
       {hasMinor && <fieldset className="cabinet-guardian"><legend>Родитель или законный представитель</legend><p>Укажите одного представителя для несовершеннолетних учеников в этой форме. В год 18-летия также просим сведения представителя: точный день рождения не собирается.</p><div className="cabinet-field-grid">
@@ -82,9 +90,11 @@ export default function BookingPage() {
         <label>Желаемая дата тренировки<input aria-label="Желаемая дата тренировки" name="requestedDate" type="date" required min={localToday()} value={date} {...accessibility("requestedDate")} onChange={event => { setDate(event.target.value); changed(); }} />{fieldError("requestedDate")}</label>
       </div><p className="cabinet-small">Дата указывает ваше пожелание. Расписание и наличие места подтверждает тренер.</p></fieldset>
       <label>Комментарий (необязательно)<textarea name="comment" value={comment} maxLength={1000} rows={3} onChange={event => { setComment(event.target.value); changed(); }} />{fieldError("comment")}</label>
-      <div className="club-consent-block"><label className="club-consent"><input type="checkbox" name="consent" aria-label="Согласие на обработку данных" checked={consent} required {...accessibility("consent")} onChange={event => { setConsent(event.target.checked); changed(); }} /><span>Я согласен на обработку указанных данных клубом MFT39 для рассмотрения заявки, связи по занятиям и учёта обучения и ежемесячных отметок оплаты. При записи несовершеннолетнего подтверждаю, что являюсь его родителем или законным представителем и даю согласие на обработку его данных.</span></label>{fieldError("consent")}
+      {legalEnabled && hasMinor && <section id="guardian-document" className="club-consent-block"><h2>Согласие законного представителя</h2><LegalDocumentReader document={guardianDocument} onRead={()=>setGuardianRead(true)} /><p className="cabinet-small">Для каждого ребёнка требуется отдельная отметка в его карточке выше. После отправки подтверждение связывается с его заявкой.</p></section>}
+      {!legalEnabled && <div className="club-consent-block"><label className="club-consent"><input type="checkbox" name="consent" aria-label="Согласие на обработку данных" checked={consent} required {...accessibility("consent")} onChange={event => { setConsent(event.target.checked); changed(); }} /><span>Я согласен на обработку указанных данных клубом MFT39 для рассмотрения заявки, связи по занятиям и учёта обучения и ежемесячных отметок оплаты. При записи несовершеннолетнего подтверждаю, что являюсь его родителем или законным представителем и даю согласие на обработку его данных.</span></label>{fieldError("consent")}
         <p className="cabinet-small">Данные отправляются на сервер клуба в России и доступны ответственным сотрудникам. Не указывайте в комментарии медицинские сведения и лишние персональные данные. Вопросы обработки и отзыва согласия: <Link className="text-link" to="/contacts">контакты клуба</Link>.</p>
-      </div>
+      </div>}
+      {legalEnabled && fieldError("consent")}
       {Object.keys(errors).length > 0 && <p role="alert" className="cabinet-error">Проверьте отмеченные поля. Ничего не отправлено.</p>}
       {sendError && <p role="alert" className="cabinet-error">{sendError} Подтверждения сохранения нет. При повторе без изменения полей дубликат не создастся.</p>}
       <div className="cabinet-form-actions"><button className={connected ? "button" : "button-secondary"} type="submit" disabled={busy}>{busy ? "Отправляем…" : connected ? "Отправить заявку" : "Проверить заполнение"}</button>{!connected && <button className="button" type="button" disabled>Отправка недоступна</button>}</div>

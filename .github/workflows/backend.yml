@@ -48,6 +48,8 @@ jobs:
         run: php8.3 backend/tests/club.php
       - name: Admin access, archives, profiles, deletion rollback and last-admin race
         run: php8.3 backend/tests/admin.php
+      - name: Legal confirmations, direct API denial and multi-child atomicity
+        run: php8.3 backend/tests/legal.php
       - name: Restart isolated MySQL and verify persisted club data
         run: |
           docker restart '${{ job.services.mysql.id }}'

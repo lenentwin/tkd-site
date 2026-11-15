@@ -5,9 +5,10 @@ use Mft39\ApiError;
 
 final class Repository
 {
-    public function __construct(private \PDO $db) {}
+    public function __construct(private \PDO $db,private bool $legalEnforcement=false,private ?array $legalDocuments=null) {}
+    public function legal(): Legal { return new Legal($this,$this->legalEnforcement,$this->legalDocuments); }
     public function q(string $sql,array $args=[]): \PDOStatement { $s=$this->db->prepare($sql);$s->execute($args);return $s; }
-    public function transaction(array $actor,callable $work): mixed {
+    public function transaction(array $actor,callable $work,bool $legalAcceptance=false): mixed {
         for($attempt=0;;$attempt++){
             $this->db->beginTransaction();try {
                 $this->q('SELECT id FROM club_access_lock WHERE id=1 FOR UPDATE')->fetch();
@@ -15,6 +16,7 @@ final class Repository
                 if(!$fresh||$fresh['status']!=='active'||$fresh['role']!==$actor['role']){throw new ApiError(403,'permissions_changed');}
                 if(isset($actor['accessVersion'])&&(int)$fresh['version']!==$actor['accessVersion']){throw new ApiError(403,'permissions_changed');}
                 if(($actor['native']??false)&&!$this->q('SELECT id FROM club_device_tokens WHERE id=? AND user_id=? AND revoked_at IS NULL AND expires_at>? FOR SHARE',[$actor['deviceId'],$actor['id'],$actor['authenticatedAt']])->fetch()){throw new ApiError(401,'unauthenticated');}
+                if(!$legalAcceptance){$this->legal()->assertAccess($actor);}
                 $result=$work();$this->db->commit();return $result;
             }catch(\Throwable $e){if($this->db->inTransaction()){$this->db->rollBack();}
                 if($e instanceof \PDOException&&in_array((int)($e->errorInfo[1]??0),[1205,1213],true)&&$attempt<2){continue;}throw $e;
@@ -112,6 +114,7 @@ final class Repository
                 if(($student['learning_status']??null)==='inactive'){throw new ApiError(409,'reactivation_requires_trainer');}
                 if($this->q('SELECT id FROM club_applications WHERE student_id=? AND hall_id=? AND requested_date=?',[$student['id'],$input['locationId'],$input['requestedDate']])->fetch()){throw new ApiError(409,'duplicate_application');}
                 $id=Rules::uuid();$this->q('INSERT INTO club_applications(id,batch_id,student_id,applicant_id,hall_id,requested_date,comment,representative_json,created_at) VALUES(?,?,?,?,?,?,?,?,?)',[$id,$batch,$student['id'],$actor['id'],$input['locationId'],$input['requestedDate'],$input['comment'],($s['age']<18||($s['birthYear']!==null&&$s['age']===18))?json_encode($input['guardian'],JSON_THROW_ON_ERROR):null,Rules::utc($now)]);
+                if($s['age']<18||($s['birthYear']!==null&&$s['age']===18)){$this->legal()->guardian($actor,$s['guardianConsent']??null,$now,$id,$student['id']);}
                 $ids[]=$id;$this->audit($actor,$student['id'],$input['locationId'],'application.created',$id,['status'=>'pending'], $now);
             }
             return ['batchId'=>$batch,'applicationIds'=>$ids,'replayed'=>false];

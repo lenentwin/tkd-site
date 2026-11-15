@@ -21,8 +21,8 @@ final class Config
         ], true) || !in_array($values['YANDEX_SCOPE'], ['', 'login:info'], true)) {
             throw new \RuntimeException('Invalid public origins or OAuth scope');
         }
-        foreach (['SESSION_TTL' => [300, 86400], 'SESSION_IDLE_TTL' => [60, 3600], 'OAUTH_TTL' => [60, 600], 'DB_PORT' => [1, 65535]] as $key => [$min, $max]) {
-            if (!is_int($values[$key] ?? null) || $values[$key] < $min || $values[$key] > $max) {
+        foreach (['LEGAL_ENFORCEMENT' => [0, 1], 'SESSION_TTL' => [300, 86400], 'SESSION_IDLE_TTL' => [60, 3600], 'OAUTH_TTL' => [60, 600], 'DB_PORT' => [1, 65535]] as $key => [$min, $max]) {
+            if (!is_int($values[$key] ?? ($key === 'LEGAL_ENFORCEMENT' ? 0 : null)) || ($values[$key] ?? 0) < $min || ($values[$key] ?? 0) > $max) {
                 throw new \RuntimeException('Invalid server limits');
             }
         }
@@ -46,5 +46,5 @@ final class Config
         return new self(array_replace($example, $local));
     }
 
-    public function get(string $key): mixed { return $this->values[$key]; }
+    public function get(string $key): mixed { return $this->values[$key] ?? ($key === 'LEGAL_ENFORCEMENT' ? 0 : null); }
 }

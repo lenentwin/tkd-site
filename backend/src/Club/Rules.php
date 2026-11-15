@@ -38,6 +38,7 @@ final class Rules
             $age=$year!==null?(int)substr(self::day($now),0,4)-$year:($s['age']??null);
             if(!is_int($age)||$age<1||$age>120){throw new ApiError(422,'invalid_age');}
             $students[]=['id'=>isset($s['id'])?self::id($s['id']):null,'lastName'=>self::name($s['lastName']??null),'firstName'=>self::name($s['firstName']??null),'middleName'=>self::name($s['middleName']??'',false),'age'=>$age,'birthYear'=>$year];
+            if(array_key_exists('guardianConsent',$s)){$students[count($students)-1]['guardianConsent']=$s['guardianConsent'];}
         }
         $hall=self::text($v['locationId']??null,64);if(!preg_match('/^[a-zA-Z0-9_-]+$/D',$hall)){throw new ApiError(422,'invalid_hall');}
         $date=$v['requestedDate']??null;$parsed=is_string($date)?\DateTimeImmutable::createFromFormat('!Y-m-d',$date,new \DateTimeZone('Europe/Kaliningrad')):false;

@@ -17,6 +17,7 @@ export function localToday(date = new Date()): string {
 export function trainingBookingSchema(locationIds: readonly string[], today = localToday()) {
   const year = Number(today.slice(0,4));
   const studentSchema = z.object({
+    guardianConsent: z.object({type:z.literal("guardian_consent"),version:z.string(),hash:z.string().regex(/^[a-f0-9]{64}$/),accepted:z.literal(true)}).optional(),
     id: z.uuid().optional(), lastName: personName, firstName: personName, middleName: optionalName,
     birthYear: z.string().regex(/^\d{4}$/, "Укажите год рождения")
       .transform(Number).pipe(z.number().int().min(Math.max(1900, year-120), "Проверьте год рождения").max(year-1, "Укажите прошедший год рождения")),

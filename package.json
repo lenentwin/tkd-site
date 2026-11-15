@@ -1,19 +1,28 @@
 {
   "name": "mft39-redesign",
   "private": true,
-  "engines": { "node": ">=24 <25" },
-  "overrides": { "@typescript-eslint/typescript-estree": { "minimatch": "^11.0.1" } },
+  "engines": {
+    "node": ">=24 <25"
+  },
+  "overrides": {
+    "@typescript-eslint/typescript-estree": {
+      "minimatch": "^11.0.1"
+    }
+  },
   "version": "0.1.0",
   "type": "module",
   "scripts": {
     "dev": "vite --host 127.0.0.1",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
-    "build": "tsc --noEmit && vite build",
+    "build": "npm run legal:check && tsc --noEmit && vite build",
     "preview": "vite preview --host 127.0.0.1",
     "test": "vitest run",
     "test:pwa": "node scripts/qa-pwa.mjs",
-    "test:admin": "node scripts/qa-admin.mjs"
+    "test:admin": "node scripts/qa-admin.mjs",
+    "legal:generate": "node scripts/legal-documents.mjs",
+    "legal:check": "node scripts/legal-documents.mjs --check",
+    "legal:release-check": "node scripts/legal-documents.mjs --check --release"
   },
   "dependencies": {
     "gsap": "^3.13.0",

@@ -58,6 +58,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const checkVisible = () => { if (document.visibilityState === "visible") void refresh(); };
     const expired = () => { invalidatePending(); current.current = null; setSession(null); setLoading(false); setUnavailable(false); };
     const denied = () => { invalidatePending(); current.current = null; setSession(null); setLoading(false); setUnavailable(false); setBlocked(true); };
+    const legalRequired = () => { invalidatePending(); setSession(previous => previous?.mode === "server" ? {...previous, legal: {required:true,enforcement:true,canAccept:false}} : previous); void refresh(); };
+    window.addEventListener("mft39:legal-required", legalRequired);
     const timer = window.setInterval(() => { if (current.current) checkVisible(); }, 60000);
     window.addEventListener("focus", checkVisible);
     window.addEventListener("pageshow", checkVisible);
@@ -70,6 +72,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => {
       alive.current = false;
       invalidatePending();
+      window.removeEventListener("mft39:legal-required", legalRequired);
       window.clearInterval(timer);
       window.removeEventListener("focus", checkVisible);
       window.removeEventListener("pageshow", checkVisible);

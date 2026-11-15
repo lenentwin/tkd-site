@@ -16,9 +16,11 @@ import RutubePage from "../pages/RutubePage";
 import VkPage from "../pages/VkPage";
 import { useContent } from "./providers/ContentProvider";
 import { useAuth } from "./providers/AuthProvider";
+import LegalGate from "../pages/legal/LegalGate";
 
 const EditorPage = import.meta.env.DEV ? lazy(() => import("../editor/EditorPage")) : null;
 const LoginPage = lazy(() => import("../pages/LoginPage"));
+const LegalDocumentPage = lazy(() => import("../pages/legal/LegalDocumentPage"));
 const AccountPage = lazy(() => import("../pages/AccountPage"));
 const AdminPage = lazy(() => import("../pages/admin/AdminPage"));
 
@@ -60,7 +62,13 @@ function RouteEffects() {
   const { pathname, hash } = useLocation();
   const { content } = useContent();
   useEffect(() => {
-    const meta = content.pages[pathname];
+    const legalTitles: Record<string, string> = {
+      "/legal/terms": "Пользовательское соглашение", "/legal/privacy": "Политика обработки персональных данных",
+      "/legal/user-consent": "Согласие на обработку персональных данных пользователя",
+      "/legal/guardian-consent": "Согласие законного представителя несовершеннолетнего",
+    };
+    const legalTitle = legalTitles[pathname];
+    const meta = legalTitle ? { title: `${legalTitle} — ${content.brand.shortName}`, description: `${legalTitle} MFT39. Полный текст документа и сведения о редакции.` } : content.pages[pathname];
     const robots = document.querySelector<HTMLMetaElement>('meta[name="robots"]');
     if (robots) robots.content = import.meta.env.DEV || ["/editor", "/login", "/booking"].includes(pathname) || pathname === "/account" || pathname.startsWith("/account/") || pathname === "/admin" || pathname.startsWith("/admin/") ? "noindex,nofollow" : "index,follow";
     document.title =
@@ -126,8 +134,12 @@ export default function App() {
             <Route path="/rutube" element={<RutubePage />} />
             <Route path="/vk" element={<VkPage />} />
             <Route path="/login" element={<LoginPage />} />
-            <Route path="/account/*" element={<AccountPage />} />
-            <Route path="/admin/*" element={<AdminPage />} />
+            <Route path="/legal/terms" element={<LegalDocumentPage type="terms" />} />
+            <Route path="/legal/privacy" element={<LegalDocumentPage type="privacy" />} />
+            <Route path="/legal/user-consent" element={<LegalDocumentPage type="user_consent" />} />
+            <Route path="/legal/guardian-consent" element={<LegalDocumentPage type="guardian_consent" />} />
+            <Route path="/account/*" element={<LegalGate><AccountPage /></LegalGate>} />
+            <Route path="/admin/*" element={<LegalGate><AdminPage /></LegalGate>} />
             <Route path="/booking" element={<LegacyBookingRedirect />} />
             <Route
               path="/gallery"
