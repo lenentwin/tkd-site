@@ -89,8 +89,9 @@ final class Repository
         return $this->transaction($actor,function()use($actor,$input,$key,$hash,$now){
             $old=$this->q('SELECT * FROM club_application_batches WHERE applicant_id=? AND idempotency_key=?',[$actor['id'],$key])->fetch();
             if($old){if($old['revoked_at']!==null){throw new ApiError(410,'application_removed');}if(!hash_equals($old['request_hash'],$hash)){throw new ApiError(409,'idempotency_conflict');}return ['batchId'=>$old['id'],'applicationIds'=>$this->q('SELECT id FROM club_applications WHERE batch_id=? ORDER BY id',[$old['id']])->fetchAll(\PDO::FETCH_COLUMN),'replayed'=>true];}
+            $this->legal()->validateGuardianInput($input['students']);
             if(!$this->q('SELECT id FROM club_halls WHERE id=? AND active=1',[$input['locationId']])->fetch()){throw new ApiError(422,'invalid_hall');}
-            $batch=Rules::uuid();$this->q('INSERT INTO club_application_batches(id,applicant_id,idempotency_key,request_hash,created_at,consent_version,consented_at) VALUES(?,?,?,?,?,?,?)',[$batch,$actor['id'],$key,$hash,Rules::utc($now),$input['consentVersion'],Rules::utc($now)]);$ids=[];
+            $batch=Rules::uuid();$this->q('INSERT INTO club_application_batches(id,applicant_id,idempotency_key,request_hash,created_at,consent_version,consented_at) VALUES(?,?,?,?,?,?,?)',[$batch,$actor['id'],$key,$hash,Rules::utc($now),$this->legal()->batchMarker(),Rules::utc($now)]);$ids=[];
             foreach($input['students'] as $s){
                 if($s['id']!==null){
                     $student=$this->q('SELECT s.* FROM club_students s JOIN club_student_guardians g ON g.student_id=s.id WHERE s.id=? AND g.user_id=? FOR UPDATE',[$s['id'],$actor['id']])->fetch();

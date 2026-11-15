@@ -22,7 +22,8 @@
     "test:admin": "node scripts/qa-admin.mjs",
     "legal:generate": "node scripts/legal-documents.mjs",
     "legal:check": "node scripts/legal-documents.mjs --check",
-    "legal:release-check": "node scripts/legal-documents.mjs --check --release"
+    "legal:release-check": "node scripts/legal-documents.mjs --check --release",
+    "test:legal": "node scripts/qa-legal.mjs"
   },
   "dependencies": {
     "gsap": "^3.13.0",

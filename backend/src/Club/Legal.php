@@ -22,6 +22,11 @@ final class Legal
         }
         if(count($types)!==4){throw new \RuntimeException('Four legal documents required');}
     }
+    public function batchMarker(): string { return $this->enforcement?'legal-acceptance-refs-v1':Rules::CONSENT_VERSION; }
+    public function validateGuardianInput(array $students): void {
+        if(!$this->enforcement){return;}
+        foreach($students as $student){if($student['age']<18||($student['birthYear']!==null&&$student['age']===18)){$this->proof($student['guardianConsent']??null,'guardian_consent');}}
+    }
     public function document(string $type): array { foreach($this->documents as $d){if($d['type']===$type){return $d;}}throw new \LogicException('Unknown legal type'); }
     public function approved(): bool { return count(array_filter($this->documents,fn($d)=>$d['status']==='approved'))===4; }
     public function ready(): bool {

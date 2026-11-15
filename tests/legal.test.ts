@@ -69,6 +69,7 @@ describe("Safe complete legal rendering", () => {
 
 const auth = vi.hoisted(() => ({ session: null as unknown, loading: false, unavailable: false, blocked: false, refresh: vi.fn(), signOut: vi.fn() }));
 vi.mock("../src/app/providers/AuthProvider", () => ({ useAuth: () => auth }));
+vi.mock("../src/pwa/runtime", () => ({ usePwa: () => ({ online: true }) }));
 import LegalGate from "../src/pages/legal/LegalGate";
 
 describe("Legal gate before private page mount", () => {
