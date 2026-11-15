@@ -14,9 +14,10 @@ const blankGuardian = { lastName: "", firstName: "", middleName: "", relationshi
 export default function BookingPage() {
   const { content } = useContent(); const [params] = useSearchParams();
   const club = useClub(); const { session } = useAuth(); const year = Number(localToday().slice(0,4));
+  const availableHalls = club.data ? club.data.halls.filter(hall => hall.active) : content.locations;
   const [students, setStudents] = useState<StudentDraft[]>(() => [newStudent()]);
   const [guardian, setGuardian] = useState(() => ({ ...blankGuardian, firstName: session?.mode === "server" ? session.firstName ?? "" : "", lastName: session?.mode === "server" ? session.lastName ?? "" : "", middleName: session?.mode === "server" ? session.middleName ?? "" : "" }));
-  const [locationId, setLocation] = useState(() => content.locations.some(item => item.id === params.get("location")) ? params.get("location")! : "");
+  const [locationId, setLocation] = useState(() => params.get("location") ?? "");
   const [date, setDate] = useState(""); const [errors, setErrors] = useState<Record<string, string>>({}); const [checked, setChecked] = useState(false);
   const form = useRef<HTMLFormElement>(null);
   const [comment, setComment] = useState(""); const [busy, setBusy] = useState(false); const sending = useRef(false);
@@ -30,7 +31,7 @@ export default function BookingPage() {
   async function validate(event: FormEvent) {
     event.preventDefault();
     if (sending.current) return;
-    const result = trainingBookingSchema(content.locations.map(item => item.id)).safeParse({
+    const result = trainingBookingSchema(availableHalls.map(item => item.id)).safeParse({
       students: students.map(({ lastName, firstName, middleName, birthYear }) => ({ lastName, firstName, middleName, birthYear })),
       guardian: hasMinor ? guardian : undefined, locationId, requestedDate: date, comment, consent, consentVersion: CLUB_CONSENT_VERSION,
     });
@@ -77,7 +78,7 @@ export default function BookingPage() {
         <label>Вы приходитесь ученику<select name="guardian.relationship" value={guardian.relationship} onChange={event => { setGuardian(value => ({ ...value, relationship: event.target.value as "parent" | "guardian" })); changed(); }}><option value="parent">Родитель</option><option value="guardian">Законный представитель</option></select></label>
       </div></fieldset>}
       <fieldset className="cabinet-place"><legend>Зал и дата</legend><div className="cabinet-field-grid">
-        <label>Спортивный зал<select aria-label="Спортивный зал" name="locationId" required value={locationId} {...accessibility("locationId")} onChange={event => { setLocation(event.target.value); changed(); }}><option value="">Выберите зал</option>{content.locations.map(item => <option key={item.id} value={item.id}>{formatDisplayText(item.name)}</option>)}</select>{fieldError("locationId")}</label>
+        <label>Спортивный зал<select aria-label="Спортивный зал" name="locationId" required value={locationId} {...accessibility("locationId")} onChange={event => { setLocation(event.target.value); changed(); }}><option value="">Выберите зал</option>{availableHalls.map(item => <option key={item.id} value={item.id}>{formatDisplayText(item.name)}</option>)}</select>{fieldError("locationId")}</label>
         <label>Желаемая дата тренировки<input aria-label="Желаемая дата тренировки" name="requestedDate" type="date" required min={localToday()} value={date} {...accessibility("requestedDate")} onChange={event => { setDate(event.target.value); changed(); }} />{fieldError("requestedDate")}</label>
       </div><p className="cabinet-small">Дата указывает ваше пожелание. Расписание и наличие места подтверждает тренер.</p></fieldset>
       <label>Комментарий (необязательно)<textarea name="comment" value={comment} maxLength={1000} rows={3} onChange={event => { setComment(event.target.value); changed(); }} />{fieldError("comment")}</label>

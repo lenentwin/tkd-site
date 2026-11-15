@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { fetchYandexSession } from "./yandexAuth";
+import { AccountBlockedError, fetchYandexSession } from "./yandexAuth";
 import type { TrainingBookingRequest } from "../types/trainingBooking";
 
 export const userRoleSchema = z.enum(["user", "trainer", "head_trainer", "admin"]);
@@ -19,7 +19,7 @@ export const applicationSchema = z.object({
 });
 export const bootstrapSchema = z.object({
   schemaVersion: z.union([z.literal(2), z.literal(3)]), actor: z.object({ id: z.number().int(), role: userRoleSchema }), staff: z.boolean(), permissions: z.array(z.string()).optional(),
-  halls: z.array(z.object({ id: z.string(), name: z.string(), address: z.string() })), scopeVersion: z.string(), cursor: z.number().int(), currentMonth: monthSchema, serverTime: z.iso.datetime({ offset: true }),
+  halls: z.array(z.object({ id: z.string(), name: z.string(), address: z.string(), active: z.union([z.boolean(), z.literal(0), z.literal(1)]).transform(Boolean).default(true) })), scopeVersion: z.string(), cursor: z.number().int(), currentMonth: monthSchema, serverTime: z.iso.datetime({ offset: true }),
 });
 const pageOf = <T extends z.ZodType>(item: T) => z.object({ items: z.array(item), nextCursor: z.string().nullable() });
 export const historySchema = z.object({ items: z.array(paymentSchema.extend({ confirmedBy: z.number().nullable(), confirmedAt: z.string().nullable(), updatedBy: z.number().nullable(), updatedAt: z.string().nullable() })), nextCursor: z.string().nullable(), currentMonth: monthSchema });
@@ -51,7 +51,13 @@ export class ClubError extends Error {
 async function request<T extends z.ZodType>(resource: string, schema: T, query: Record<string, string> = {}, body?: unknown, key?: string): Promise<z.output<T>> {
   const headers: Record<string, string> = {};
   if (body !== undefined) {
-    const { session, csrfToken } = await fetchYandexSession();
+    let auth: Awaited<ReturnType<typeof fetchYandexSession>>;
+    try { auth = await fetchYandexSession(); }
+    catch (error) {
+      if (error instanceof AccountBlockedError) { window.dispatchEvent(new Event("mft39:account-blocked")); throw new ClubError(403, "account_blocked"); }
+      throw new ClubError(0, "unavailable");
+    }
+    const { session, csrfToken } = auth;
     if (!session || !csrfToken) { window.dispatchEvent(new Event("mft39:session-expired")); throw new ClubError(401, "unauthenticated"); }
     headers["Content-Type"] = "application/json"; headers["X-CSRF-Token"] = csrfToken;
     if (key) headers["Idempotency-Key"] = key;
@@ -63,7 +69,7 @@ async function request<T extends z.ZodType>(resource: string, schema: T, query: 
     if (response.status === 401) window.dispatchEvent(new Event("mft39:session-expired"));
     let code = "unavailable"; try { const error = await response.json(); if (typeof error.error === "string") code = error.error; } catch { /* Never echo raw server HTML. */ }
     if (code === "account_blocked") window.dispatchEvent(new Event("mft39:account-blocked"));
-    if (code === "permissions_changed") window.dispatchEvent(new Event("mft39:access-changed"));
+    if (code === "permissions_changed" || (response.status === 403 && code === "forbidden")) window.dispatchEvent(new Event("mft39:access-changed"));
     throw new ClubError(response.status, code);
   }
   let json: unknown;

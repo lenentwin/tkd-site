@@ -26,6 +26,7 @@ try {
             if($command==='grant'){$repo->q('INSERT INTO club_trainer_halls(user_id,hall_id,assigned_at) VALUES(?,?,?)',[(int)$id,$value,Rules::utc(time())]);}
             else{$repo->q('DELETE FROM club_trainer_halls WHERE user_id=? AND hall_id=?',[(int)$id,$value]);}
             $repo->q('UPDATE users SET version=version+1 WHERE id=?',[(int)$id]);
+            $repo->q('UPDATE club_device_tokens SET revoked_at=? WHERE user_id=? AND revoked_at IS NULL',[time(),(int)$id]);
             $repo->audit(null,null,$value,'staff.'.$command,$id,['source'=>'owner_cli'],time());
         }
     }

@@ -4,6 +4,12 @@ import { bootstrapSchema, canClub, clubApi } from "../src/services/club";
 import { trainingBookingSchema } from "../src/types/trainingBooking";
 afterEach(() => vi.unstubAllGlobals());
 describe("Administrative and profile security contract", () => {
+  it("immediately closes a blocked session before sending a profile mutation", async () => {
+    const dispatchEvent=vi.fn();vi.stubGlobal("window",{dispatchEvent});
+    const request=vi.fn().mockResolvedValue(new Response('{"error":"account_blocked"}',{status:403}));vi.stubGlobal("fetch",request);
+    await expect(clubApi.saveProfile("Имя","Фамилия","",1)).rejects.toMatchObject({status:403,code:"account_blocked"});
+    expect(request).toHaveBeenCalledOnce();expect(dispatchEvent.mock.calls[0][0].type).toBe("mft39:account-blocked");
+  });
   it("uses server deny/grant lists for schema 3, including missing permissions", () => {
     const base = { schemaVersion: 3, actor: { id: 7, role: "trainer" }, staff: true, halls: [], scopeVersion: "new", cursor: 0, currentMonth: "2026-11", serverTime: "2026-11-15T12:00:00Z" };
     expect(canClub(bootstrapSchema.parse(base), "payments.write")).toBe(false);

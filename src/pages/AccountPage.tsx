@@ -23,6 +23,7 @@ const items = [
 function Overview() {
   const { content } = useContent();
   const club = useClub();
+  const halls = club.data ? club.data.halls.filter(hall => hall.active) : content.locations;
   return <>
     <div className="cabinet-welcome"><p className="eyebrow">Добро пожаловать в MFT39</p><h1>Тренироваться.<br />Становиться сильнее.</h1>
       <p>Всё, что связано с вашими занятиями и занятиями детей, будет здесь. Выберите нужный раздел.</p></div>
@@ -31,7 +32,7 @@ function Overview() {
       <Link to="/account/bookings"><span>Ваши занятия</span><h2>Мои тренировки</h2><p>Заявки, статусы учеников и история ежемесячных отметок оплаты.</p><Icon name="arrow" /></Link>
     </div>
     <section className="cabinet-halls" aria-labelledby="cabinet-halls-title"><div className="cabinet-section-heading"><h2 id="cabinet-halls-title">Залы клуба</h2><Link className="text-link" to="/contacts#map">Адреса и маршруты <Icon name="arrow" /></Link></div>
-      {content.locations.map(location => <article key={location.id}><div><h3><DisplayText text={location.name} /></h3><p><DisplayText text={location.address} /></p></div><Link className="text-link" to={`/account/book?location=${encodeURIComponent(location.id)}`}>Выбрать зал <Icon name="arrow" /></Link></article>)}
+      {halls.map(location => <article key={location.id}><div><h3><DisplayText text={location.name} /></h3><p><DisplayText text={location.address} /></p></div><Link className="text-link" to={`/account/book?location=${encodeURIComponent(location.id)}`}>Выбрать зал <Icon name="arrow" /></Link></article>)}
     </section>
   </>;
 }
